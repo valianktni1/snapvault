@@ -1,6 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Printer, Download, Check, Heart, Cake, Briefcase } from 'lucide-react';
+
+// Size options in inches and pixels (96 DPI for screen, will scale for print)
+const SIZE_OPTIONS = [
+  { key: '10x8', label: '10" x 8"', width: 960, height: 768, printWidth: '10in', printHeight: '8in' },
+  { key: '8x6', label: '8" x 6"', width: 768, height: 576, printWidth: '8in', printHeight: '6in' }
+];
 
 // Printable QR Card Templates for each event type
 const QR_CARD_TEMPLATES = {
@@ -144,52 +150,59 @@ const QR_CARD_TEMPLATES = {
   ]
 };
 
-// Individual QR Card component for printing
-function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType }) {
+// Individual QR Card component for printing/download
+function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size, forExport = false }) {
+  const sizeConfig = SIZE_OPTIONS.find(s => s.key === size) || SIZE_OPTIONS[0];
+  const scale = forExport ? 1 : 0.4; // Scale down for preview
+  const width = sizeConfig.width * scale;
+  const height = sizeConfig.height * scale;
+  const qrSize = Math.min(width, height) * 0.35;
+
   const getDecorations = () => {
+    const cornerSize = width * 0.08;
     switch (template.style) {
       case 'elegant':
         return (
           <>
-            <div className="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 rounded-tl-lg" style={{ borderColor: template.borderColor }} />
-            <div className="absolute top-0 right-0 w-16 h-16 border-t-4 border-r-4 rounded-tr-lg" style={{ borderColor: template.borderColor }} />
-            <div className="absolute bottom-0 left-0 w-16 h-16 border-b-4 border-l-4 rounded-bl-lg" style={{ borderColor: template.borderColor }} />
-            <div className="absolute bottom-0 right-0 w-16 h-16 border-b-4 border-r-4 rounded-br-lg" style={{ borderColor: template.borderColor }} />
+            <div className="absolute top-0 left-0 border-t-4 border-l-4 rounded-tl-lg" style={{ borderColor: template.borderColor, width: cornerSize, height: cornerSize }} />
+            <div className="absolute top-0 right-0 border-t-4 border-r-4 rounded-tr-lg" style={{ borderColor: template.borderColor, width: cornerSize, height: cornerSize }} />
+            <div className="absolute bottom-0 left-0 border-b-4 border-l-4 rounded-bl-lg" style={{ borderColor: template.borderColor, width: cornerSize, height: cornerSize }} />
+            <div className="absolute bottom-0 right-0 border-b-4 border-r-4 rounded-br-lg" style={{ borderColor: template.borderColor, width: cornerSize, height: cornerSize }} />
           </>
         );
       case 'floral':
         return (
           <>
-            <div className="absolute top-2 left-2 text-3xl opacity-30">✿</div>
-            <div className="absolute top-2 right-2 text-3xl opacity-30">✿</div>
-            <div className="absolute bottom-2 left-2 text-3xl opacity-30">✿</div>
-            <div className="absolute bottom-2 right-2 text-3xl opacity-30">✿</div>
+            <div className="absolute top-3 left-3 opacity-30" style={{ fontSize: width * 0.06 }}>✿</div>
+            <div className="absolute top-3 right-3 opacity-30" style={{ fontSize: width * 0.06 }}>✿</div>
+            <div className="absolute bottom-3 left-3 opacity-30" style={{ fontSize: width * 0.06 }}>✿</div>
+            <div className="absolute bottom-3 right-3 opacity-30" style={{ fontSize: width * 0.06 }}>✿</div>
           </>
         );
       case 'confetti':
         return (
           <>
-            <div className="absolute top-3 left-3 text-xl">🎉</div>
-            <div className="absolute top-3 right-3 text-xl">🎊</div>
-            <div className="absolute bottom-3 left-3 text-xl">🎈</div>
-            <div className="absolute bottom-3 right-3 text-xl">🎁</div>
+            <div className="absolute top-4 left-4" style={{ fontSize: width * 0.05 }}>🎉</div>
+            <div className="absolute top-4 right-4" style={{ fontSize: width * 0.05 }}>🎊</div>
+            <div className="absolute bottom-4 left-4" style={{ fontSize: width * 0.05 }}>🎈</div>
+            <div className="absolute bottom-4 right-4" style={{ fontSize: width * 0.05 }}>🎁</div>
           </>
         );
       case 'balloons':
         return (
           <>
-            <div className="absolute top-2 left-4 text-2xl">🎈</div>
-            <div className="absolute top-2 right-4 text-2xl">🎈</div>
+            <div className="absolute top-3 left-6" style={{ fontSize: width * 0.06 }}>🎈</div>
+            <div className="absolute top-3 right-6" style={{ fontSize: width * 0.06 }}>🎈</div>
           </>
         );
       case 'corporate_dark':
       case 'tech':
         return (
           <>
-            <div className="absolute top-0 left-0 w-20 h-1" style={{ backgroundColor: template.accentColor }} />
-            <div className="absolute top-0 right-0 w-20 h-1" style={{ backgroundColor: template.accentColor }} />
-            <div className="absolute bottom-0 left-0 w-20 h-1" style={{ backgroundColor: template.accentColor }} />
-            <div className="absolute bottom-0 right-0 w-20 h-1" style={{ backgroundColor: template.accentColor }} />
+            <div className="absolute top-0 left-0" style={{ backgroundColor: template.accentColor, width: width * 0.15, height: 4 }} />
+            <div className="absolute top-0 right-0" style={{ backgroundColor: template.accentColor, width: width * 0.15, height: 4 }} />
+            <div className="absolute bottom-0 left-0" style={{ backgroundColor: template.accentColor, width: width * 0.15, height: 4 }} />
+            <div className="absolute bottom-0 right-0" style={{ backgroundColor: template.accentColor, width: width * 0.15, height: 4 }} />
           </>
         );
       default:
@@ -199,46 +212,65 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType }) {
 
   return (
     <div
-      className="relative w-[350px] h-[450px] p-6 flex flex-col items-center justify-between rounded-lg shadow-lg print:shadow-none"
+      className="relative flex flex-col items-center justify-between rounded-lg shadow-lg print:shadow-none"
       style={{
         backgroundColor: template.bgColor,
-        border: `3px solid ${template.borderColor}`
+        border: `4px solid ${template.borderColor}`,
+        width: width,
+        height: height,
+        padding: width * 0.05
       }}
     >
       {getDecorations()}
       
       {/* Header */}
-      <div className="text-center z-10 mt-2">
+      <div className="text-center z-10" style={{ marginTop: height * 0.02 }}>
         <p
-          className="text-sm uppercase tracking-widest mb-2"
-          style={{ color: template.accentColor }}
+          className="uppercase tracking-widest"
+          style={{ 
+            color: template.accentColor,
+            fontSize: width * 0.028
+          }}
         >
           {eventType === 'wedding' ? 'Share Your Memories' :
            eventType === 'birthday' ? 'Capture The Fun!' :
            'Event Photos'}
         </p>
         <h2
-          className="text-xl font-bold leading-tight"
-          style={{ color: template.textColor, fontFamily: template.headerFont }}
+          className="font-bold leading-tight"
+          style={{ 
+            color: template.textColor, 
+            fontFamily: template.headerFont,
+            fontSize: width * 0.055,
+            marginTop: height * 0.01
+          }}
         >
           {eventTitle || 'Event Name'}
         </h2>
         {eventSubtitle && (
-          <p className="text-sm mt-1" style={{ color: template.accentColor }}>
+          <p style={{ 
+            color: template.accentColor,
+            fontSize: width * 0.028,
+            marginTop: height * 0.01
+          }}>
             {eventSubtitle}
           </p>
         )}
       </div>
 
       {/* QR Code */}
-      <div className="z-10 my-4">
+      <div className="z-10" style={{ margin: `${height * 0.03}px 0` }}>
         <div
-          className="p-3 rounded-xl"
-          style={{ backgroundColor: '#FFFFFF', border: `2px solid ${template.borderColor}` }}
+          className="rounded-xl"
+          style={{ 
+            backgroundColor: '#FFFFFF', 
+            border: `3px solid ${template.borderColor}`,
+            padding: qrSize * 0.1
+          }}
         >
           <QRCodeSVG
             value={guestUrl || 'https://example.com'}
-            size={140}
+            size={qrSize}
             level="H"
             includeMargin={false}
           />
@@ -246,24 +278,29 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType }) {
       </div>
 
       {/* Footer */}
-      <div className="text-center z-10 mb-2">
+      <div className="text-center z-10" style={{ marginBottom: height * 0.02 }}>
         <p
-          className="text-sm font-medium mb-1"
-          style={{ color: template.textColor }}
+          className="font-medium"
+          style={{ 
+            color: template.textColor,
+            fontSize: width * 0.035
+          }}
         >
           Scan to Upload
         </p>
         <p
-          className="text-xs"
-          style={{ color: template.accentColor }}
+          style={{ 
+            color: template.accentColor,
+            fontSize: width * 0.025
+          }}
         >
           Photos & Videos
         </p>
-        <div className="flex items-center justify-center gap-1 mt-3">
-          {eventType === 'wedding' && <Heart className="w-4 h-4" style={{ color: template.accentColor }} />}
-          {eventType === 'birthday' && <Cake className="w-4 h-4" style={{ color: template.accentColor }} />}
-          {eventType === 'corporate' && <Briefcase className="w-4 h-4" style={{ color: template.accentColor }} />}
-          <span className="text-xs font-medium" style={{ color: template.accentColor }}>
+        <div className="flex items-center justify-center gap-1" style={{ marginTop: height * 0.02 }}>
+          {eventType === 'wedding' && <Heart style={{ color: template.accentColor, width: width * 0.035, height: width * 0.035 }} />}
+          {eventType === 'birthday' && <Cake style={{ color: template.accentColor, width: width * 0.035, height: width * 0.035 }} />}
+          {eventType === 'corporate' && <Briefcase style={{ color: template.accentColor, width: width * 0.035, height: width * 0.035 }} />}
+          <span className="font-medium" style={{ color: template.accentColor, fontSize: width * 0.025 }}>
             SnapVault
           </span>
         </div>
@@ -274,15 +311,18 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType }) {
 
 export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle, guestUrl }) {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const printRef = useRef();
+  const [selectedSize, setSelectedSize] = useState('10x8');
+  const [downloading, setDownloading] = useState(false);
+  const canvasRef = useRef(null);
   
   const templates = QR_CARD_TEMPLATES[eventType] || QR_CARD_TEMPLATES.wedding;
+  const sizeConfig = SIZE_OPTIONS.find(s => s.key === selectedSize) || SIZE_OPTIONS[0];
 
   const handlePrint = () => {
     if (!selectedTemplate) return;
     
-    const printContent = printRef.current;
-    const printWindow = window.open('', '', 'width=800,height=600');
+    const printWindow = window.open('', '', 'width=1000,height=800');
+    const sizeStyle = SIZE_OPTIONS.find(s => s.key === selectedSize);
     
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -299,6 +339,28 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
               min-height: 100vh;
               background: #f5f5f5;
             }
+            .qr-card {
+              width: ${sizeStyle.printWidth};
+              height: ${sizeStyle.printHeight};
+              background: ${selectedTemplate.bgColor};
+              border: 4px solid ${selectedTemplate.borderColor};
+              border-radius: 12px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: space-between;
+              padding: 5%;
+              position: relative;
+            }
+            .header { text-align: center; margin-top: 2%; }
+            .subtitle { color: ${selectedTemplate.accentColor}; font-size: 2.8vmin; text-transform: uppercase; letter-spacing: 0.2em; }
+            .title { color: ${selectedTemplate.textColor}; font-family: ${selectedTemplate.headerFont}; font-size: 5.5vmin; font-weight: 700; margin-top: 1%; }
+            .event-subtitle { color: ${selectedTemplate.accentColor}; font-size: 2.8vmin; margin-top: 1%; }
+            .qr-container { background: white; border: 3px solid ${selectedTemplate.borderColor}; border-radius: 12px; padding: 3%; }
+            .footer { text-align: center; margin-bottom: 2%; }
+            .scan-text { color: ${selectedTemplate.textColor}; font-size: 3.5vmin; font-weight: 500; }
+            .photos-text { color: ${selectedTemplate.accentColor}; font-size: 2.5vmin; }
+            .brand { color: ${selectedTemplate.accentColor}; font-size: 2.5vmin; margin-top: 2%; display: flex; align-items: center; justify-content: center; gap: 4px; }
             @media print {
               body { background: white; }
               .qr-card { 
@@ -310,7 +372,21 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
           </style>
         </head>
         <body>
-          ${printContent.innerHTML}
+          <div class="qr-card">
+            <div class="header">
+              <p class="subtitle">${eventType === 'wedding' ? 'Share Your Memories' : eventType === 'birthday' ? 'Capture The Fun!' : 'Event Photos'}</p>
+              <h2 class="title">${eventTitle || 'Event Name'}</h2>
+              ${eventSubtitle ? `<p class="event-subtitle">${eventSubtitle}</p>` : ''}
+            </div>
+            <div class="qr-container">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(guestUrl)}" alt="QR Code" style="width: 35vmin; height: 35vmin;" />
+            </div>
+            <div class="footer">
+              <p class="scan-text">Scan to Upload</p>
+              <p class="photos-text">Photos & Videos</p>
+              <p class="brand">❤️ SnapVault</p>
+            </div>
+          </div>
         </body>
       </html>
     `);
@@ -321,14 +397,109 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
     setTimeout(() => {
       printWindow.print();
       printWindow.close();
-    }, 500);
+    }, 1000);
   };
+
+  const handleDownload = useCallback(async () => {
+    if (!selectedTemplate) return;
+    setDownloading(true);
+
+    try {
+      // Create a canvas for the download
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const dpi = 300; // High DPI for print quality
+      const scale = dpi / 96;
+      
+      canvas.width = sizeConfig.width * scale;
+      canvas.height = sizeConfig.height * scale;
+      
+      // Fill background
+      ctx.fillStyle = selectedTemplate.bgColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw border
+      ctx.strokeStyle = selectedTemplate.borderColor;
+      ctx.lineWidth = 12 * scale;
+      ctx.strokeRect(6 * scale, 6 * scale, canvas.width - 12 * scale, canvas.height - 12 * scale);
+      
+      // Load and draw QR code
+      const qrImg = new Image();
+      qrImg.crossOrigin = 'anonymous';
+      
+      await new Promise((resolve, reject) => {
+        qrImg.onload = resolve;
+        qrImg.onerror = reject;
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(guestUrl)}`;
+      });
+      
+      const qrSize = Math.min(canvas.width, canvas.height) * 0.38;
+      const qrX = (canvas.width - qrSize) / 2;
+      const qrY = (canvas.height - qrSize) / 2;
+      
+      // QR code background
+      ctx.fillStyle = '#FFFFFF';
+      const padding = 20 * scale;
+      ctx.fillRect(qrX - padding, qrY - padding, qrSize + padding * 2, qrSize + padding * 2);
+      ctx.strokeStyle = selectedTemplate.borderColor;
+      ctx.lineWidth = 4 * scale;
+      ctx.strokeRect(qrX - padding, qrY - padding, qrSize + padding * 2, qrSize + padding * 2);
+      
+      // Draw QR code
+      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+      
+      // Draw text
+      ctx.textAlign = 'center';
+      
+      // Subtitle
+      ctx.fillStyle = selectedTemplate.accentColor;
+      ctx.font = `${28 * scale}px Arial`;
+      const subtitleText = eventType === 'wedding' ? 'SHARE YOUR MEMORIES' : eventType === 'birthday' ? 'CAPTURE THE FUN!' : 'EVENT PHOTOS';
+      ctx.fillText(subtitleText, canvas.width / 2, 80 * scale);
+      
+      // Title
+      ctx.fillStyle = selectedTemplate.textColor;
+      ctx.font = `bold ${52 * scale}px Georgia`;
+      ctx.fillText(eventTitle || 'Event Name', canvas.width / 2, 140 * scale);
+      
+      // Event subtitle
+      if (eventSubtitle) {
+        ctx.fillStyle = selectedTemplate.accentColor;
+        ctx.font = `${28 * scale}px Arial`;
+        ctx.fillText(eventSubtitle, canvas.width / 2, 185 * scale);
+      }
+      
+      // Bottom text
+      ctx.fillStyle = selectedTemplate.textColor;
+      ctx.font = `bold ${36 * scale}px Arial`;
+      ctx.fillText('Scan to Upload', canvas.width / 2, canvas.height - 100 * scale);
+      
+      ctx.fillStyle = selectedTemplate.accentColor;
+      ctx.font = `${26 * scale}px Arial`;
+      ctx.fillText('Photos & Videos', canvas.width / 2, canvas.height - 65 * scale);
+      
+      ctx.font = `${24 * scale}px Arial`;
+      ctx.fillText('♥ SnapVault', canvas.width / 2, canvas.height - 30 * scale);
+      
+      // Download
+      const link = document.createElement('a');
+      link.download = `${eventTitle?.replace(/[^a-z0-9]/gi, '_') || 'QR_Card'}_${selectedSize}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+      
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Failed to download. Please try the Print option instead.');
+    } finally {
+      setDownloading(false);
+    }
+  }, [selectedTemplate, selectedSize, sizeConfig, eventTitle, eventSubtitle, eventType, guestUrl]);
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-bold text-slate-900 mb-1">Choose Your QR Card Design</h3>
-        <p className="text-sm text-slate-500">Select a printable template to share with your guests</p>
+        <h3 className="text-lg font-bold text-slate-900 mb-1">Choose Your Printable QR Card</h3>
+        <p className="text-sm text-slate-500">Select a template to print or download - place at your venue for guests to scan</p>
       </div>
 
       {/* Template Selection Grid */}
@@ -346,14 +517,14 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
           >
             {/* Mini Preview */}
             <div
-              className="h-32 p-3 flex flex-col items-center justify-center"
+              className="h-28 p-3 flex flex-col items-center justify-center"
               style={{ backgroundColor: tmpl.bgColor }}
             >
               <div
-                className="w-12 h-12 rounded-lg mb-2 flex items-center justify-center"
+                className="w-10 h-10 rounded-lg mb-2 flex items-center justify-center"
                 style={{ backgroundColor: '#fff', border: `2px solid ${tmpl.borderColor}` }}
               >
-                <div className="w-8 h-8 bg-slate-200 rounded" />
+                <div className="w-6 h-6 bg-slate-300 rounded" />
               </div>
               <p
                 className="text-xs font-medium text-center truncate w-full"
@@ -379,53 +550,103 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
         ))}
       </div>
 
-      {/* Preview & Print Section */}
+      {/* Size Selection */}
+      {selectedTemplate && (
+        <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <span className="text-sm font-medium text-slate-700">Card Size:</span>
+          <div className="flex gap-2">
+            {SIZE_OPTIONS.map((size) => (
+              <button
+                key={size.key}
+                data-testid={`size-option-${size.key}`}
+                onClick={() => setSelectedSize(size.key)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  selectedSize === size.key
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-300'
+                }`}
+              >
+                {size.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Preview & Actions Section */}
       {selectedTemplate && (
         <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
           <div className="flex flex-col lg:flex-row gap-6 items-center">
             {/* Preview */}
-            <div ref={printRef} className="flex-shrink-0">
+            <div className="flex-shrink-0 overflow-hidden rounded-lg shadow-md">
               <QRCard
                 template={selectedTemplate}
                 eventTitle={eventTitle}
                 eventSubtitle={eventSubtitle}
                 guestUrl={guestUrl}
                 eventType={eventType}
+                size={selectedSize}
               />
             </div>
 
-            {/* Print Instructions */}
+            {/* Actions */}
             <div className="flex-1 text-center lg:text-left">
-              <h4 className="font-bold text-slate-900 mb-2">Ready to Print!</h4>
+              <h4 className="font-bold text-slate-900 mb-2">Ready to Print or Download!</h4>
               <p className="text-sm text-slate-600 mb-4">
-                Print this QR card and place it at your venue. Guests can scan to instantly upload their photos and videos.
+                Your {sizeConfig.label} QR card is ready. Print it or download as a high-quality image.
               </p>
               
               <div className="space-y-2 mb-6">
-                <p className="text-xs text-slate-500">💡 <strong>Tip:</strong> Print on card stock for durability</p>
-                <p className="text-xs text-slate-500">📱 <strong>Tip:</strong> Place at each table or entrance</p>
-                <p className="text-xs text-slate-500">🖼️ <strong>Tip:</strong> Frame it for an elegant look</p>
+                <p className="text-xs text-slate-500 flex items-center gap-2">
+                  <span>💡</span> <strong>Tip:</strong> Print on card stock for durability
+                </p>
+                <p className="text-xs text-slate-500 flex items-center gap-2">
+                  <span>📱</span> <strong>Tip:</strong> Place at each table or entrance
+                </p>
+                <p className="text-xs text-slate-500 flex items-center gap-2">
+                  <span>🖼️</span> <strong>Tip:</strong> Frame it for an elegant look
+                </p>
               </div>
 
-              <button
-                data-testid="print-qr-card-btn"
-                onClick={handlePrint}
-                className="flex items-center justify-center gap-2 w-full lg:w-auto px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-all active:scale-[0.98]"
-              >
-                <Printer className="w-5 h-5" />
-                Print QR Card
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  data-testid="download-qr-card-btn"
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all active:scale-[0.98] disabled:opacity-60"
+                >
+                  {downloading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-5 h-5" />
+                      Download ({sizeConfig.label})
+                    </>
+                  )}
+                </button>
+                <button
+                  data-testid="print-qr-card-btn"
+                  onClick={handlePrint}
+                  className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-all active:scale-[0.98]"
+                >
+                  <Printer className="w-5 h-5" />
+                  Print Card
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {!selectedTemplate && (
-        <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200 text-center">
+        <div className="bg-slate-50 rounded-2xl p-8 border-2 border-dashed border-slate-200 text-center">
           <div className="w-16 h-16 bg-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Printer className="w-8 h-8 text-slate-400" />
+            <Download className="w-8 h-8 text-slate-400" />
           </div>
-          <p className="text-slate-500 text-sm">Select a template above to preview and print</p>
+          <p className="text-slate-500 text-sm">Select a template above to preview and download</p>
         </div>
       )}
     </div>
