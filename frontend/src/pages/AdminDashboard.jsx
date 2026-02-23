@@ -1,0 +1,366 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Layout from '../components/Layout';
+import api, { API } from '../utils/api';
+import { getTemplate } from '../utils/themes';
+import {
+  Users, Calendar, Images, Download, Trash2,
+  Heart, Cake, Briefcase, Shield, Eye, HardDrive,
+  AlertTriangle, ChevronDown, ChevronUp
+} from 'lucide-react';
+
+const EVENT_ICONS = { wedding: Heart, birthday: Cake, corporate: Briefcase };
+
+function StatCard({ label, value, icon: Icon, color }) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+      <div className="flex items-center gap-2 mb-3">
+        <div className={`w-8 h-8 ${color} rounded-xl flex items-center justify-center`}>
+          <Icon className="w-4 h-4 text-white" />
+        </div>
+        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide">{label}</p>
+      </div>
+      <p data-testid={`admin-stat-${label.toLowerCase().replace(/ /g, '-')}`}
+        className="text-3xl font-bold text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+export default function AdminDashboard() {
+  const [stats, setStats] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState('events');
+  const [downloading, setDownloading] = useState(null);
+  const [deletingEvent, setDeletingEvent] = useState(null);
+  const [deletingUser, setDeletingUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    Promise.all([
+      api.get('/admin/stats'),
+      api.get('/admin/events'),
+      api.get('/admin/users')
+    ]).then(([s, e, u]) => {
+      setStats(s.data);
+      setEvents(e.data);
+      setUsers(u.data);
+    }).catch(err => {
+      if (err.response?.status === 403) navigate('/dashboard');
+    }).finally(() => setLoading(false));
+  }, []);
+
+  const handleBulkDownload = async (event) => {
+    if (event.media_count === 0) { alert('No media files to download.'); return; }
+    setDownloading(event.id);
+    try {
+      const token = localStorage.getItem('snapvault_token');
+      const response = await fetch(`${API}/events/${event.id}/download`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${event.title.replace(/[^a-z0-9]/gi, '_')}_SnapVault.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Download failed. Please try again.');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    if (!window.confirm('Permanently delete this event and ALL its media? This cannot be undone.')) return;
+    setDeletingEvent(eventId);
+    try {
+      await api.delete(`/events/${eventId}`);
+      setEvents(prev => prev.filter(e => e.id !== eventId));
+      setStats(prev => prev ? { ...prev, total_events: prev.total_events - 1 } : prev);
+    } catch {
+      alert('Failed to delete event');
+    } finally {
+      setDeletingEvent(null);
+    }
+  };
+
+  const handleDeleteUser = async (userId, userName) => {
+    if (!window.confirm(`Delete user "${userName}" and ALL their events and media? This cannot be undone.`)) return;
+    setDeletingUser(userId);
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      // Refresh events and stats
+      const [statsRes, eventsRes] = await Promise.all([
+        api.get('/admin/stats'),
+        api.get('/admin/events')
+      ]);
+      setStats(statsRes.data);
+      setEvents(eventsRes.data);
+    } catch {
+      alert('Failed to delete user');
+    } finally {
+      setDeletingUser(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Layout title="Admin Panel">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-24 bg-slate-200 rounded-2xl animate-pulse" />
+            ))}
+          </div>
+          <div className="h-64 bg-slate-200 rounded-2xl animate-pulse" />
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout title="Admin Panel">
+      {/* Admin Badge */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-1.5 rounded-xl text-sm font-bold shadow-sm">
+          <Shield className="w-4 h-4" />
+          Full Admin Access
+        </div>
+        <p className="text-slate-500 text-sm">
+          You have full control over all events, media and users on this platform.
+        </p>
+      </div>
+
+      {/* Stats */}
+      {stats && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+          <StatCard label="Total Users" value={stats.total_users} icon={Users} color="bg-indigo-500" />
+          <StatCard label="Total Events" value={stats.total_events} icon={Calendar} color="bg-violet-500" />
+          <StatCard label="Total Media Files" value={stats.total_media} icon={Images} color="bg-emerald-500" />
+          <StatCard label="Storage Used" value={`${stats.storage_used_mb} MB`} icon={HardDrive} color="bg-amber-500" />
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div className="flex bg-slate-100 rounded-xl p-1 w-fit mb-5 gap-0.5">
+        {[
+          { key: 'events', label: `All Events (${events.length})` },
+          { key: 'users', label: `Users (${users.length})` }
+        ].map(t => (
+          <button
+            key={t.key}
+            data-testid={`admin-tab-${t.key}`}
+            onClick={() => setTab(t.key)}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+              tab === t.key ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Events Table */}
+      {tab === 'events' && (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          {events.length === 0 ? (
+            <div className="py-16 text-center text-slate-400">
+              <Calendar className="w-10 h-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm">No events on this platform yet</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100">
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Event</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Organizer</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden sm:table-cell">Type</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Files</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Created</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {events.map(event => {
+                    const template = getTemplate(event.event_type, event.template);
+                    const Icon = EVENT_ICONS[event.event_type] || Heart;
+                    return (
+                      <tr key={event.id} data-testid={`admin-event-row-${event.id}`} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-10 rounded-full flex-shrink-0" style={{ backgroundColor: template.accent }} />
+                            <div>
+                              <p className="font-semibold text-slate-900 text-sm">{event.title}</p>
+                              <p className="text-xs text-slate-400 mt-0.5">{template.name}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 hidden md:table-cell">
+                          <p className="text-sm text-slate-700 font-medium">{event.organizer_name}</p>
+                          <p className="text-xs text-slate-400">{event.organizer_email}</p>
+                        </td>
+                        <td className="px-5 py-4 hidden sm:table-cell">
+                          <div className="flex items-center gap-1.5">
+                            <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: template.accent }} />
+                            <span className="text-sm text-slate-600 capitalize">{event.event_type}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className={`text-sm font-bold ${event.media_count === 0 ? 'text-slate-300' : 'text-slate-900'}`}>
+                            {event.media_count}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 hidden lg:table-cell text-xs text-slate-400">
+                          {new Date(event.created_at).toLocaleDateString('en-GB', {
+                            day: 'numeric', month: 'short', year: 'numeric'
+                          })}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              data-testid={`admin-view-gallery-${event.id}`}
+                              onClick={() => navigate(`/events/${event.id}/gallery`)}
+                              title="View & Moderate Gallery"
+                              className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              data-testid={`admin-download-${event.id}`}
+                              onClick={() => handleBulkDownload(event)}
+                              disabled={downloading === event.id || event.media_count === 0}
+                              title="Download All as ZIP"
+                              className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors disabled:opacity-30"
+                            >
+                              {downloading === event.id ? (
+                                <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <Download className="w-4 h-4" />
+                              )}
+                            </button>
+                            <button
+                              data-testid={`admin-delete-event-${event.id}`}
+                              onClick={() => handleDeleteEvent(event.id)}
+                              disabled={deletingEvent === event.id}
+                              title="Delete Event"
+                              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-30"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Users Table */}
+      {tab === 'users' && (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          {users.length === 0 ? (
+            <div className="py-16 text-center text-slate-400">
+              <Users className="w-10 h-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm">No users registered yet</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100">
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">User</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden sm:table-cell">Email</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Role</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Events</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Joined</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {users.map(user => (
+                    <tr key={user.id} data-testid={`admin-user-row-${user.id}`} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+                            user.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {user.name[0]?.toUpperCase()}
+                          </div>
+                          <p className="font-semibold text-slate-900 text-sm">{user.name}</p>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 hidden sm:table-cell text-sm text-slate-600">{user.email}</td>
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          user.role === 'admin'
+                            ? 'bg-indigo-100 text-indigo-700'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {user.role === 'admin' && <Shield className="w-3 h-3" />}
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-sm font-bold text-slate-900">{user.events_count}</td>
+                      <td className="px-5 py-4 hidden md:table-cell text-xs text-slate-400">
+                        {user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB', {
+                          day: 'numeric', month: 'short', year: 'numeric'
+                        }) : '-'}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end">
+                          {user.role !== 'admin' && (
+                            <button
+                              data-testid={`admin-delete-user-${user.id}`}
+                              onClick={() => handleDeleteUser(user.id, user.name)}
+                              disabled={deletingUser === user.id}
+                              title="Delete User & All Data"
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl border border-red-200 transition-colors disabled:opacity-40"
+                            >
+                              <AlertTriangle className="w-3 h-3" />
+                              Delete
+                            </button>
+                          )}
+                          {user.role === 'admin' && (
+                            <span className="text-xs text-slate-400 px-2">—</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Admin Setup Note */}
+      <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800 mb-1">Self-Hosting Note</p>
+            <p className="text-xs text-amber-700 leading-relaxed">
+              Admin access is controlled by <code className="bg-amber-100 px-1 rounded">ADMIN_EMAIL</code> in{' '}
+              <code className="bg-amber-100 px-1 rounded">/app/backend/.env</code>.
+              Change this to your own email on your TrueNAS deployment.
+              The JWT_SECRET_KEY should also be changed to a strong random string.
+            </p>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+}
