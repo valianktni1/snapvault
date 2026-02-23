@@ -52,12 +52,39 @@ export default function OrganizerGallery() {
 
   const imageCount = media.filter(m => m.file_type === 'image').length;
   const videoCount = media.filter(m => m.file_type === 'video').length;
+  const audioCount = media.filter(m => m.file_type === 'audio').length;
 
   const filtered = media.filter(m => {
     if (filter === 'images') return m.file_type === 'image';
     if (filter === 'videos') return m.file_type === 'video';
+    if (filter === 'audio') return m.file_type === 'audio';
     return true;
   });
+
+  const handleBulkDownload = async () => {
+    if (media.length === 0) { alert('No files to download.'); return; }
+    setDownloading(true);
+    try {
+      const token = localStorage.getItem('snapvault_token');
+      const response = await fetch(`${API}/events/${id}/download`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${event?.title?.replace(/[^a-z0-9]/gi, '_') || 'event'}_SnapVault.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Download failed. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <Layout title={event ? `${event.title} — Gallery` : 'Gallery'}>
