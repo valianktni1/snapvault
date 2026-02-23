@@ -242,6 +242,14 @@ export default function OrganizerGallery() {
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     loading="lazy"
                   />
+                ) : m.file_type === 'audio' ? (
+                  <div className="w-full h-full bg-gradient-to-br from-violet-100 to-indigo-100 flex flex-col items-center justify-center p-3 gap-2">
+                    <div className="w-12 h-12 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg">
+                      <Music className="w-6 h-6 text-white" />
+                    </div>
+                    <p className="text-xs text-indigo-700 font-semibold text-center truncate w-full px-1">{m.original_name}</p>
+                    <p className="text-xs text-indigo-400">{m.uploader_name}</p>
+                  </div>
                 ) : (
                   <div className="w-full h-full relative bg-slate-800">
                     <video
