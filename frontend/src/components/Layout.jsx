@@ -26,12 +26,14 @@ function SidebarContent({ onClose }) {
   return (
     <div className="flex flex-col h-full">
       <div className="p-5 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
-            <Camera className="w-5 h-5 text-white" />
-          </div>
+        <div className="flex items-center gap-2.5">
+          <img
+            src="/snapvault-logo.png"
+            alt="SnapVault Events"
+            className="h-10 w-10 object-contain rounded-xl flex-shrink-0"
+          />
           <div>
-            <p className="font-bold text-slate-900 text-sm">SnapVault</p>
+            <p className="font-bold text-slate-900 text-sm leading-tight">SnapVault</p>
             <p className="text-xs text-slate-400">Events Platform</p>
           </div>
         </div>
