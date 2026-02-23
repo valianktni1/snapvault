@@ -108,6 +108,19 @@ export default function OrganizerGallery() {
                 alt={lightbox.original_name}
                 className="max-w-full max-h-[80vh] rounded-xl object-contain"
               />
+            ) : lightbox.file_type === 'audio' ? (
+              <div className="bg-gradient-to-br from-violet-900 to-indigo-900 rounded-2xl p-12 flex flex-col items-center gap-6 min-w-[300px]">
+                <div className="w-20 h-20 bg-indigo-500 rounded-full flex items-center justify-center shadow-2xl">
+                  <Music className="w-10 h-10 text-white" />
+                </div>
+                <p className="text-white font-semibold text-center">{lightbox.original_name}</p>
+                <audio
+                  src={`${BACKEND_URL}${lightbox.url}`}
+                  controls
+                  autoPlay
+                  className="w-full"
+                />
+              </div>
             ) : (
               <video
                 src={`${BACKEND_URL}${lightbox.url}`}
