@@ -4,7 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import { getTemplate } from '../utils/themes';
 import { API } from '../utils/api';
-import { Upload, Check, X, Image as ImageIcon, Video, Camera } from 'lucide-react';
+import { Upload, Check, X, Image as ImageIcon, Video, Music } from 'lucide-react';
 
 function formatSize(bytes) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
