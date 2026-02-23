@@ -72,18 +72,22 @@ export default function Dashboard() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-7">
         {[
-          { label: 'Total Events', value: events.length, icon: '📋', color: 'bg-indigo-50 text-indigo-600' },
-          { label: 'Total Uploads', value: totalMedia, icon: '📸', color: 'bg-emerald-50 text-emerald-600' },
-          { label: 'Events This Month', value: thisMonth, icon: '📅', color: 'bg-violet-50 text-violet-600' },
+          { label: 'Total Events', value: events.length, color: 'bg-indigo-50 text-indigo-600' },
+          { label: 'Total Uploads', value: totalMedia, color: 'bg-emerald-50 text-emerald-600' },
+          { label: 'Events This Month', value: thisMonth, color: 'bg-violet-50 text-violet-600' },
         ].map(stat => (
           <div key={stat.label} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
             <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-2">{stat.label}</p>
-            <p
-              data-testid={`stat-${stat.label.toLowerCase().replace(/ /g, '-')}`}
-              className="text-3xl font-bold text-slate-900"
-            >
-              {stat.value}
-            </p>
+            {loading ? (
+              <div className="h-8 w-12 bg-slate-200 rounded-lg animate-pulse" />
+            ) : (
+              <p
+                data-testid={`stat-${stat.label.toLowerCase().replace(/ /g, '-')}`}
+                className="text-3xl font-bold text-slate-900"
+              >
+                {stat.value}
+              </p>
+            )}
           </div>
         ))}
       </div>
