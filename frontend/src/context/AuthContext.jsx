@@ -12,7 +12,14 @@ export function AuthProvider({ children }) {
     const savedUser = localStorage.getItem('snapvault_user');
     if (token && savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        // Refresh user from server to get latest role
+        api.get('/auth/me').then(res => {
+          const updated = res.data;
+          localStorage.setItem('snapvault_user', JSON.stringify(updated));
+          setUser(updated);
+        }).catch(() => {});
       } catch {
         localStorage.removeItem('snapvault_token');
         localStorage.removeItem('snapvault_user');
