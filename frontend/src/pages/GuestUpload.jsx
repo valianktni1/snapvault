@@ -226,7 +226,7 @@ export default function GuestUpload() {
           </p>
 
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            {['Photos & Videos', 'Max 200MB each', 'Multiple files OK'].map(tag => (
+            {['Photos & Videos', 'Voice Messages', 'Max 200MB each', 'Multiple files OK'].map(tag => (
               <span
                 key={tag}
                 style={{
