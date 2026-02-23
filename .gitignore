@@ -50,3 +50,7 @@ test_reports/
 dist/
 *.egg-info/
 .eggs/
+-e 
+# Environment files
+*.env
+*.env.*
