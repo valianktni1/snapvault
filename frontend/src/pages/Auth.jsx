@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Camera, Eye, EyeOff, Heart } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function Auth({ defaultTab = 'login' }) {
   const [tab, setTab] = useState(defaultTab);
@@ -46,11 +46,15 @@ export default function Auth({ defaultTab = 'login' }) {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border-2 border-white" />
         </div>
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-            <Camera className="w-6 h-6 text-white" />
+          <div className="bg-white rounded-2xl p-1.5 shadow-lg flex-shrink-0">
+            <img
+              src="/snapvault-logo.png"
+              alt="SnapVault Events"
+              className="w-14 h-14 object-contain"
+            />
           </div>
           <div>
-            <p className="text-white font-bold text-lg leading-none">SnapVault Events</p>
+            <p className="text-white font-bold text-xl leading-tight">SnapVault Events</p>
             <p className="text-indigo-200 text-xs mt-0.5">Private media collection platform</p>
           </div>
         </div>
