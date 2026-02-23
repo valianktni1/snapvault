@@ -4,7 +4,8 @@ import Layout from '../components/Layout';
 import api from '../utils/api';
 import { getTemplate } from '../utils/themes';
 import { QRCodeSVG } from 'qrcode.react';
-import { Copy, Check, Edit, Trash2, Images, ExternalLink, Calendar, ArrowLeft } from 'lucide-react';
+import { Copy, Check, Edit, Trash2, Images, ExternalLink, Calendar, ArrowLeft, Printer } from 'lucide-react';
+import PrintableQRCards from '../components/PrintableQRCards';
 
 export default function EventManage() {
   const { id } = useParams();
