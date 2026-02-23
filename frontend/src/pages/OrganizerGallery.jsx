@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import api, { BACKEND_URL } from '../utils/api';
-import { Trash2, Download, Image as ImageIcon, Video, ArrowLeft, X } from 'lucide-react';
+import api, { BACKEND_URL, API } from '../utils/api';
+import { Trash2, Download, Image as ImageIcon, Video, ArrowLeft, X, Music } from 'lucide-react';
 
 function formatSize(bytes) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -22,6 +22,7 @@ export default function OrganizerGallery() {
   const [filter, setFilter] = useState('all');
   const [deleting, setDeleting] = useState(null);
   const [lightbox, setLightbox] = useState(null);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     Promise.all([
