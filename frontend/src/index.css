@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide Emergent badge */
+#emergent-badge {
+    display: none !important;
+}
+
 body {
     margin: 0;
     font-family:
