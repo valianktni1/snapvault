@@ -84,9 +84,11 @@ export default function Auth({ defaultTab = 'login' }) {
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-3 lg:hidden">
-              <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
-                <Camera className="w-5 h-5 text-white" />
-              </div>
+              <img
+                src="/snapvault-logo.png"
+                alt="SnapVault Events"
+                className="w-10 h-10 object-contain rounded-xl"
+              />
               <span className="font-bold text-slate-900 text-lg">SnapVault Events</span>
             </div>
             <h2 className="text-2xl font-bold text-slate-900">
