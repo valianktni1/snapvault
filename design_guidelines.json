@@ -1,0 +1,203 @@
+{
+  "project_name": "SnapVault Events",
+  "brand_identity": {
+    "name": "SnapVault Events",
+    "core_value": "Frictionless, private, high-quality event media collection.",
+    "emotional_tone": {
+      "dashboard": "Trustworthy, Efficient, Modern, Clean",
+      "wedding": "Romantic, Soft, Premium, Timeless",
+      "birthday": "Joyful, Energetic, Warm, Celebratory",
+      "corporate": "Professional, Sleek, Innovative, Structured"
+    }
+  },
+  "typography": {
+    "dashboard_primary": "Inter, sans-serif",
+    "dashboard_secondary": "Manrope, sans-serif",
+    "template_fonts": {
+      "wedding": {
+        "headings": "Playfair Display, serif",
+        "body": "Cormorant Garamond, serif"
+      },
+      "birthday": {
+        "headings": "Fredoka, sans-serif",
+        "body": "Nunito, sans-serif"
+      },
+      "corporate": {
+        "headings": "Outfit, sans-serif",
+        "body": "Inter, sans-serif"
+      },
+      "kids": {
+        "headings": "Chewy, cursive",
+        "body": "Varela Round, sans-serif"
+      }
+    }
+  },
+  "colors": {
+    "dashboard": {
+      "light": {
+        "background": "#f8fafc",
+        "foreground": "#0f172a",
+        "primary": "#4f46e5",
+        "secondary": "#e2e8f0",
+        "accent": "#818cf8",
+        "muted": "#94a3b8",
+        "border": "#e2e8f0"
+      },
+      "dark": {
+        "background": "#020617",
+        "foreground": "#f8fafc",
+        "primary": "#6366f1",
+        "secondary": "#1e293b",
+        "accent": "#4338ca",
+        "muted": "#64748b",
+        "border": "#1e293b"
+      }
+    },
+    "templates": {
+      "wedding": {
+        "floral": {
+          "bg": "#fff1f2",
+          "text": "#881337",
+          "accent": "#f43f5e",
+          "button": "#be123c"
+        },
+        "minimalist": {
+          "bg": "#f8fafc",
+          "text": "#334155",
+          "accent": "#94a3b8",
+          "button": "#475569"
+        },
+        "vintage": {
+          "bg": "#fefce8",
+          "text": "#713f12",
+          "accent": "#eab308",
+          "button": "#a16207"
+        },
+        "modern": {
+          "bg": "#172554",
+          "text": "#f8fafc",
+          "accent": "#fbbf24",
+          "button": "#d97706"
+        }
+      },
+      "birthday": {
+        "confetti": {
+          "bg": "#fef9c3",
+          "text": "#a16207",
+          "accent": "#ec4899",
+          "button": "#e11d48"
+        },
+        "balloons": {
+          "bg": "#f0f9ff",
+          "text": "#0c4a6e",
+          "accent": "#38bdf8",
+          "button": "#0284c7"
+        },
+        "elegant": {
+          "bg": "#450a0a",
+          "text": "#fef2f2",
+          "accent": "#fbbf24",
+          "button": "#b91c1c"
+        },
+        "kids": {
+          "bg": "#eff6ff",
+          "text": "#1e3a8a",
+          "accent": "#facc15",
+          "button": "#2563eb"
+        }
+      },
+      "corporate": {
+        "modern_tech": {
+          "bg": "#0f172a",
+          "text": "#f8fafc",
+          "accent": "#06b6d4",
+          "button": "#0891b2"
+        },
+        "classic": {
+          "bg": "#f1f5f9",
+          "text": "#1e293b",
+          "accent": "#334155",
+          "button": "#0f172a"
+        },
+        "minimal": {
+          "bg": "#ffffff",
+          "text": "#000000",
+          "accent": "#525252",
+          "button": "#171717"
+        },
+        "bold": {
+          "bg": "#581c87",
+          "text": "#ffffff",
+          "accent": "#c084fc",
+          "button": "#7e22ce"
+        }
+      }
+    }
+  },
+  "layout_strategy": {
+    "dashboard": {
+      "structure": "Sidebar + Topbar + Content Area",
+      "grid": "Bento Grid (Grid-cols-1 md:grid-cols-3 lg:grid-cols-4)",
+      "spacing": "Relaxed (p-6 to p-8)",
+      "border_radius": "rounded-lg"
+    },
+    "guest_upload": {
+      "structure": "Single Page, Center Focused, Mobile Optimized",
+      "max_width": "max-w-md mx-auto",
+      "components": [
+        "Hero Header (Event Name + Welcome)",
+        "Massive Upload Zone (Drag & Drop)",
+        "Gallery Grid (Masonry)",
+        "Floating Upload Button (Mobile Sticky)"
+      ]
+    }
+  },
+  "components": {
+    "buttons": {
+      "default": "h-10 px-4 py-2 rounded-md font-medium transition-all active:scale-95",
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90",
+      "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+      "ghost": "hover:bg-accent hover:text-accent-foreground"
+    },
+    "cards": {
+      "dashboard": "bg-card text-card-foreground rounded-xl border shadow-sm",
+      "guest": "backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl shadow-xl"
+    },
+    "inputs": {
+      "default": "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    }
+  },
+  "assets": {
+    "icons": "lucide-react",
+    "suggested_images": {
+      "wedding_floral": "https://images.unsplash.com/photo-1620116370493-886c8a514bde?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MTJ8MHwxfHNlYXJjaHwzfHx3ZWRkaW5nJTIwZmxvcmFsJTIwYmx1c2glMjBiYWNrZ3JvdW5kJTIwbWluaW1hbGlzdHxlbnwwfHx8fDE3NzE4NDY2NTR8MA&ixlib=rb-4.1.0&q=85",
+      "wedding_minimalist": "https://images.unsplash.com/photo-1612314578108-cdd41a612f2a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MTJ8MHwxfHNlYXJjaHwyfHx3ZWRkaW5nJTIwZmxvcmFsJTIwYmx1c2glMjBiYWNrZ3JvdW5kJTIwbWluaW1hbGlzdHxlbnwwfHx8fDE3NzE4NDY2NTR8MA&ixlib=rb-4.1.0&q=85",
+      "birthday_balloons": "https://images.unsplash.com/photo-1729707735724-c8f92562d3be?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NDh8MHwxfHNlYXJjaHwzfHxiaXJ0aGRheSUyMGNvbG9yZnVsJTIwY29uZmV0dGklMjBiYWxsb29ucyUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzcxODQ2NjU2fDA&ixlib=rb-4.1.0&q=85",
+      "corporate_tech": "https://images.pexels.com/photos/30771471/pexels-photo-30771471.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+    }
+  },
+  "animation_guidelines": {
+    "micro_interactions": "transform duration-200 ease-out",
+    "page_transition": "animate-in fade-in zoom-in-95 duration-300",
+    "hover_lift": "hover:-translate-y-1 hover:shadow-lg transition-all duration-300",
+    "upload_pulse": "animate-pulse"
+  },
+  "accessibility": {
+    "contrast_check": "Ensure 4.5:1 ratio for text.",
+    "interactive_elements": "Min size 44x44px for touch targets.",
+    "focus_states": "Visible ring-2 ring-offset-2 ring-primary."
+  },
+  "universal_guidelines": [
+    "Do not use gradients for dark colors.",
+    "Avoid generic centered layouts; use grids and asymmetry.",
+    "Use glass-morphism (backdrop-blur) for guest overlays.",
+    "Ensure all interactive elements have data-testid attributes."
+  ],
+  "instructions_to_main_agent": {
+    "setup": "Install lucide-react, framer-motion, clsx, tailwind-merge.",
+    "dashboard_implementation": "Build a layout wrapper with Sidebar and Header. Use shadcn Card for stats.",
+    "guest_view_implementation": "Create a dynamic layout component that accepts 'theme' prop. This component should inject the specific colors and fonts defined in the 'colors.templates' section.",
+    "upload_logic": "Implement a drag-and-drop zone using react-dropzone. Show progress bars for each file. Handle errors gracefully.",
+    "qr_code": "Use 'qrcode.react' library to generate QR codes for event links."
+  }
+}
