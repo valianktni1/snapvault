@@ -114,7 +114,17 @@ export default function GuestUpload() {
       {/* Header */}
       <div className="text-center px-5 pt-10 pb-8">
         <div className="flex items-center justify-center gap-2 mb-6">
-          <Camera style={{ color: theme.accent, width: '18px', height: '18px' }} />
+          <img
+            src="/snapvault-logo.png"
+            alt="SnapVault Events"
+            style={{
+              width: '36px',
+              height: '36px',
+              objectFit: 'contain',
+              borderRadius: '10px',
+              filter: theme.bg === '#0f172a' || theme.bg === '#172554' || theme.bg === '#3b0764' || theme.bg === '#4c1d95' || theme.bg === '#450a0a' ? 'invert(1) brightness(2)' : 'none'
+            }}
+          />
           <span style={{
             color: theme.accent,
             fontSize: '11px',
