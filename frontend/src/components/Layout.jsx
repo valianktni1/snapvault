@@ -3,9 +3,12 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Camera, LayoutDashboard, Plus, LogOut, Menu, X } from 'lucide-react';
 
-const navItems = [
+import { Shield } from 'lucide-react';
+
+const getNavItems = (isAdmin) => [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/events/create', label: 'Create Event', icon: Plus },
+  ...(isAdmin ? [{ path: '/admin', label: 'Admin Panel', icon: Shield }] : []),
 ];
 
 function SidebarContent({ onClose }) {

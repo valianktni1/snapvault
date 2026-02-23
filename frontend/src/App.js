@@ -7,6 +7,7 @@ import CreateEvent from "./pages/CreateEvent";
 import EventManage from "./pages/EventManage";
 import OrganizerGallery from "./pages/OrganizerGallery";
 import GuestUpload from "./pages/GuestUpload";
+import AdminDashboard from "./pages/AdminDashboard";
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
@@ -19,6 +20,20 @@ const ProtectedRoute = ({ children }) => {
     );
   }
   if (!user) return <Navigate to="/login" replace />;
+  return children;
+};
+
+const AdminRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
   return children;
 };
 
@@ -35,6 +50,7 @@ function App() {
           <Route path="/events/:id/edit" element={<ProtectedRoute><CreateEvent edit /></ProtectedRoute>} />
           <Route path="/events/:id" element={<ProtectedRoute><EventManage /></ProtectedRoute>} />
           <Route path="/events/:id/gallery" element={<ProtectedRoute><OrganizerGallery /></ProtectedRoute>} />
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/event/:slug" element={<GuestUpload />} />
         </Routes>
       </BrowserRouter>
