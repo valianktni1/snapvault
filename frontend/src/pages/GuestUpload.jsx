@@ -71,7 +71,8 @@ export default function GuestUpload() {
     onDrop,
     accept: {
       'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.heic', '.heif', '.webp', '.bmp'],
-      'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.m4v', '.3gp', '.wmv']
+      'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.m4v', '.3gp', '.wmv'],
+      'audio/*': ['.mp3', '.wav', '.ogg', '.aac', '.m4a', '.flac']
     },
     maxSize: 200 * 1024 * 1024,
     multiple: true
