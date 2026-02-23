@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -11,7 +11,7 @@ from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from dotenv import load_dotenv
-import os, uuid, subprocess, logging, shutil
+import os, uuid, subprocess, logging, shutil, zipfile, io
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -25,6 +25,7 @@ UPLOAD_DIR = Path(os.environ.get('UPLOAD_DIR', '/app/uploads'))
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 MAX_FILE_SIZE = 200 * 1024 * 1024  # 200MB
 VIDEO_COMPRESS_THRESHOLD = 80 * 1024 * 1024  # 80MB
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '').lower().strip()
 
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
@@ -79,6 +80,13 @@ def create_token(user_id: str) -> str:
     return jwt.encode({"sub": user_id, "exp": expire}, JWT_SECRET, algorithm=JWT_ALGO)
 
 
+def is_admin(user: dict) -> bool:
+    return (
+        user.get('email', '').lower() == ADMIN_EMAIL
+        or user.get('role') == 'admin'
+    )
+
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     if not credentials:
         raise HTTPException(401, "Not authenticated")
@@ -93,6 +101,12 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     if not user:
         raise HTTPException(401, "User not found")
     return user
+
+
+async def get_admin_user(current_user=Depends(get_current_user)):
+    if not is_admin(current_user):
+        raise HTTPException(403, "Admin access required")
+    return current_user
 
 
 def compress_video(input_path: Path, output_path: Path) -> bool:
@@ -142,6 +156,15 @@ def fmt_media(m: dict) -> dict:
     }
 
 
+def fmt_user_response(user: dict) -> dict:
+    return {
+        "id": str(user["_id"]),
+        "email": user["email"],
+        "name": user["name"],
+        "role": "admin" if (user.get('email', '').lower() == ADMIN_EMAIL or user.get('role') == 'admin') else "organizer"
+    }
+
+
 # --- Auth Routes ---
 @api_router.post("/auth/register")
 async def register(user_data: UserCreate):
@@ -154,8 +177,9 @@ async def register(user_data: UserCreate):
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     result = await db.users.insert_one(doc)
+    doc["_id"] = result.inserted_id
     token = create_token(str(result.inserted_id))
-    return {"token": token, "user": {"id": str(result.inserted_id), "email": doc["email"], "name": doc["name"]}}
+    return {"token": token, "user": fmt_user_response(doc)}
 
 
 @api_router.post("/auth/login")
@@ -164,12 +188,12 @@ async def login(creds: UserLogin):
     if not user or not pwd_context.verify(creds.password, user["hashed_password"]):
         raise HTTPException(401, "Invalid email or password")
     token = create_token(str(user["_id"]))
-    return {"token": token, "user": {"id": str(user["_id"]), "email": user["email"], "name": user["name"]}}
+    return {"token": token, "user": fmt_user_response(user)}
 
 
 @api_router.get("/auth/me")
 async def me(current_user=Depends(get_current_user)):
-    return {"id": str(current_user["_id"]), "email": current_user["email"], "name": current_user["name"]}
+    return fmt_user_response(current_user)
 
 
 # --- Event Routes ---
@@ -206,7 +230,10 @@ async def create_event(event_data: EventCreate, current_user=Depends(get_current
 
 @api_router.get("/events/{event_id}")
 async def get_event(event_id: str, current_user=Depends(get_current_user)):
-    event = await db.events.find_one({"_id": ObjectId(event_id), "organizer_id": str(current_user["_id"])})
+    query = {"_id": ObjectId(event_id)}
+    if not is_admin(current_user):
+        query["organizer_id"] = str(current_user["_id"])
+    event = await db.events.find_one(query)
     if not event:
         raise HTTPException(404, "Event not found")
     count = await db.media.count_documents({"event_id": event_id})
@@ -215,7 +242,10 @@ async def get_event(event_id: str, current_user=Depends(get_current_user)):
 
 @api_router.put("/events/{event_id}")
 async def update_event(event_id: str, event_data: EventUpdate, current_user=Depends(get_current_user)):
-    event = await db.events.find_one({"_id": ObjectId(event_id), "organizer_id": str(current_user["_id"])})
+    query = {"_id": ObjectId(event_id)}
+    if not is_admin(current_user):
+        query["organizer_id"] = str(current_user["_id"])
+    event = await db.events.find_one(query)
     if not event:
         raise HTTPException(404, "Event not found")
     updates = {k: v for k, v in event_data.model_dump().items() if v is not None}
@@ -228,7 +258,10 @@ async def update_event(event_id: str, event_data: EventUpdate, current_user=Depe
 
 @api_router.delete("/events/{event_id}")
 async def delete_event(event_id: str, current_user=Depends(get_current_user)):
-    event = await db.events.find_one({"_id": ObjectId(event_id), "organizer_id": str(current_user["_id"])})
+    query = {"_id": ObjectId(event_id)}
+    if not is_admin(current_user):
+        query["organizer_id"] = str(current_user["_id"])
+    event = await db.events.find_one(query)
     if not event:
         raise HTTPException(404, "Event not found")
     event_dir = UPLOAD_DIR / event_id
@@ -237,6 +270,48 @@ async def delete_event(event_id: str, current_user=Depends(get_current_user)):
     await db.media.delete_many({"event_id": event_id})
     await db.events.delete_one({"_id": ObjectId(event_id)})
     return {"message": "Event deleted"}
+
+
+# --- Bulk Download (ZIP) ---
+@api_router.get("/events/{event_id}/download")
+async def download_event_media(event_id: str, current_user=Depends(get_current_user)):
+    query = {"_id": ObjectId(event_id)}
+    if not is_admin(current_user):
+        query["organizer_id"] = str(current_user["_id"])
+    event = await db.events.find_one(query)
+    if not event:
+        raise HTTPException(404, "Event not found")
+
+    media_list = await db.media.find({"event_id": event_id}).to_list(1000)
+    if not media_list:
+        raise HTTPException(404, "No media files to download")
+
+    zip_buffer = io.BytesIO()
+    seen_names: dict = {}
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for m in media_list:
+            file_path = UPLOAD_DIR / event_id / m["filename"]
+            if not file_path.exists():
+                continue
+            orig = m["original_name"]
+            if orig in seen_names:
+                seen_names[orig] += 1
+                name, ext = os.path.splitext(orig)
+                orig = f"{name}_{seen_names[orig]}{ext}"
+            else:
+                seen_names[orig] = 0
+            zipf.write(str(file_path), orig)
+
+    zip_buffer.seek(0)
+    safe_title = event["title"].replace(' ', '_')[:50]
+    safe_title = ''.join(c for c in safe_title if c.isalnum() or c in '_-')
+    filename = f"{safe_title}_SnapVault.zip"
+
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
 
 
 # --- Public Guest Routes ---
@@ -270,14 +345,17 @@ async def upload_media(
     content_type = file.content_type or ""
     is_video = content_type.startswith("video/")
     is_image = content_type.startswith("image/")
+    is_audio = content_type.startswith("audio/")
 
-    if not (is_video or is_image):
-        raise HTTPException(400, "Only images and videos are supported")
+    if not (is_video or is_image or is_audio):
+        raise HTTPException(400, "Only images, videos and audio files are supported")
 
     event_dir = UPLOAD_DIR / event_id
     event_dir.mkdir(exist_ok=True)
 
-    suffix = Path(file.filename or "upload").suffix or ('.mp4' if is_video else '.jpg')
+    suffix = Path(file.filename or "upload").suffix or (
+        '.mp4' if is_video else '.mp3' if is_audio else '.jpg'
+    )
     unique_name = f"{uuid.uuid4()}{suffix}"
     file_path = event_dir / unique_name
     file_size = 0
@@ -311,23 +389,27 @@ async def upload_media(
             file_size = compressed_path.stat().st_size
             logger.info(f"Compressed to {file_size / 1024 / 1024:.1f}MB")
 
+    file_type = "video" if is_video else "audio" if is_audio else "image"
     doc = {
         "event_id": event_id,
         "filename": final_name,
         "original_name": file.filename or "upload",
-        "file_type": "video" if is_video else "image",
+        "file_type": file_type,
         "file_size": file_size,
         "uploader_name": uploader_name or "Guest",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     result = await db.media.insert_one(doc)
-    return {"id": str(result.inserted_id), "message": "Upload successful", "file_type": doc["file_type"]}
+    return {"id": str(result.inserted_id), "message": "Upload successful", "file_type": file_type}
 
 
 # --- Organizer Media Routes ---
 @api_router.get("/events/{event_id}/media")
 async def get_event_media(event_id: str, current_user=Depends(get_current_user)):
-    event = await db.events.find_one({"_id": ObjectId(event_id), "organizer_id": str(current_user["_id"])})
+    query = {"_id": ObjectId(event_id)}
+    if not is_admin(current_user):
+        query["organizer_id"] = str(current_user["_id"])
+    event = await db.events.find_one(query)
     if not event:
         raise HTTPException(404, "Event not found")
     media_list = await db.media.find({"event_id": event_id}).sort("created_at", -1).to_list(1000)
@@ -339,9 +421,13 @@ async def delete_media(media_id: str, current_user=Depends(get_current_user)):
     m = await db.media.find_one({"_id": ObjectId(media_id)})
     if not m:
         raise HTTPException(404, "Media not found")
-    event = await db.events.find_one({"_id": ObjectId(m["event_id"]), "organizer_id": str(current_user["_id"])})
-    if not event:
-        raise HTTPException(403, "Not authorized")
+    if not is_admin(current_user):
+        event = await db.events.find_one({
+            "_id": ObjectId(m["event_id"]),
+            "organizer_id": str(current_user["_id"])
+        })
+        if not event:
+            raise HTTPException(403, "Not authorized")
     (UPLOAD_DIR / m["event_id"] / m["filename"]).unlink(missing_ok=True)
     await db.media.delete_one({"_id": ObjectId(media_id)})
     return {"message": "Deleted"}
@@ -354,6 +440,72 @@ async def serve_file(event_id: str, filename: str):
     if not file_path.exists():
         raise HTTPException(404, "File not found")
     return FileResponse(str(file_path))
+
+
+# --- Admin Routes ---
+@api_router.get("/admin/stats")
+async def admin_stats(current_user=Depends(get_admin_user)):
+    total_users = await db.users.count_documents({})
+    total_events = await db.events.count_documents({})
+    total_media = await db.media.count_documents({})
+    storage_bytes = sum(
+        f.stat().st_size for f in UPLOAD_DIR.rglob("*") if f.is_file()
+    ) if UPLOAD_DIR.exists() else 0
+    return {
+        "total_users": total_users,
+        "total_events": total_events,
+        "total_media": total_media,
+        "storage_used_mb": round(storage_bytes / 1024 / 1024, 1)
+    }
+
+
+@api_router.get("/admin/events")
+async def admin_get_events(current_user=Depends(get_admin_user)):
+    events = await db.events.find({}).sort("created_at", -1).to_list(1000)
+    result = []
+    for e in events:
+        count = await db.media.count_documents({"event_id": str(e["_id"])})
+        organizer = await db.users.find_one({"_id": ObjectId(e["organizer_id"])})
+        event_data = fmt_event(e, count)
+        event_data["organizer_name"] = organizer["name"] if organizer else "Unknown"
+        event_data["organizer_email"] = organizer["email"] if organizer else "Unknown"
+        result.append(event_data)
+    return result
+
+
+@api_router.get("/admin/users")
+async def admin_get_users(current_user=Depends(get_admin_user)):
+    users = await db.users.find({}).sort("created_at", -1).to_list(1000)
+    result = []
+    for u in users:
+        count = await db.events.count_documents({"organizer_id": str(u["_id"])})
+        result.append({
+            "id": str(u["_id"]),
+            "name": u["name"],
+            "email": u["email"],
+            "role": "admin" if u.get('email', '').lower() == ADMIN_EMAIL else "organizer",
+            "events_count": count,
+            "created_at": u.get("created_at", "")
+        })
+    return result
+
+
+@api_router.delete("/admin/users/{user_id}")
+async def admin_delete_user(user_id: str, current_user=Depends(get_admin_user)):
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(404, "User not found")
+    # Delete all their events and media
+    events = await db.events.find({"organizer_id": user_id}).to_list(1000)
+    for e in events:
+        event_id = str(e["_id"])
+        event_dir = UPLOAD_DIR / event_id
+        if event_dir.exists():
+            shutil.rmtree(event_dir)
+        await db.media.delete_many({"event_id": event_id})
+    await db.events.delete_many({"organizer_id": user_id})
+    await db.users.delete_one({"_id": ObjectId(user_id)})
+    return {"message": "User and all their data deleted"}
 
 
 app.include_router(api_router)
