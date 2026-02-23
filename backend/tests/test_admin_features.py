@@ -53,7 +53,7 @@ class TestAdminAuth:
         resp = requests.post(f"{BASE_URL}/api/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASS})
         assert resp.status_code == 200
         data = resp.json()
-        assert data.get("role") == "admin"
+        assert data.get("user", {}).get("role") == "admin"
 
     def test_non_admin_cannot_access_admin_stats(self, non_admin_token):
         resp = requests.get(f"{BASE_URL}/api/admin/stats", headers={"Authorization": f"Bearer {non_admin_token}"})
