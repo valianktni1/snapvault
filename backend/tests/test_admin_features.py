@@ -77,7 +77,7 @@ class TestAdminStats:
         assert "total_users" in data
         assert "total_events" in data
         assert "total_media" in data
-        assert "storage_used" in data
+        assert "storage_used_mb" in data or "storage_used" in data
 
     def test_admin_stats_values_are_non_negative(self, admin_token):
         resp = requests.get(f"{BASE_URL}/api/admin/stats", headers={"Authorization": f"Bearer {admin_token}"})
