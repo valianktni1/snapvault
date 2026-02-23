@@ -18,7 +18,7 @@ def admin_token():
     resp = requests.post(f"{BASE_URL}/api/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASS})
     assert resp.status_code == 200, f"Admin login failed: {resp.text}"
     data = resp.json()
-    assert data.get("role") == "admin", f"Expected admin role, got: {data.get('role')}"
+    assert data.get("user", {}).get("role") == "admin", f"Expected admin role, got: {data.get('user', {}).get('role')}"
     return data["token"]
 
 
