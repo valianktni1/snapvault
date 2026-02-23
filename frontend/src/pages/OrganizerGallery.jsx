@@ -160,31 +160,49 @@ export default function OrganizerGallery() {
             <div>
               <h2 className="text-lg font-bold text-slate-900">{event?.title}</h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                {media.length} file{media.length !== 1 ? 's' : ''} · {imageCount} photos · {videoCount} videos
+                {media.length} file{media.length !== 1 ? 's' : ''} · {imageCount} photos · {videoCount} videos{audioCount > 0 ? ` · ${audioCount} voice` : ''}
               </p>
             </div>
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex bg-slate-100 rounded-xl p-1 gap-0.5">
-            {[
-              { key: 'all', label: `All (${media.length})` },
-              { key: 'images', label: `Photos (${imageCount})` },
-              { key: 'videos', label: `Videos (${videoCount})` }
-            ].map(f => (
-              <button
-                key={f.key}
-                data-testid={`filter-${f.key}`}
-                onClick={() => setFilter(f.key)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                  filter === f.key
-                    ? 'bg-white shadow-sm text-slate-900'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            {/* Bulk Download */}
+            <button
+              data-testid="bulk-download-btn"
+              onClick={handleBulkDownload}
+              disabled={downloading || media.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 disabled:opacity-40 transition-all active:scale-[0.98]"
+            >
+              {downloading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              {downloading ? 'Creating ZIP...' : 'Download All (ZIP)'}
+            </button>
+
+            {/* Filter Tabs */}
+            <div className="flex bg-slate-100 rounded-xl p-1 gap-0.5">
+              {[
+                { key: 'all', label: `All (${media.length})` },
+                { key: 'images', label: `Photos (${imageCount})` },
+                { key: 'videos', label: `Videos (${videoCount})` },
+                ...(audioCount > 0 ? [{ key: 'audio', label: `Voice (${audioCount})` }] : [])
+              ].map(f => (
+                <button
+                  key={f.key}
+                  data-testid={`filter-${f.key}`}
+                  onClick={() => setFilter(f.key)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    filter === f.key
+                      ? 'bg-white shadow-sm text-slate-900'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
