@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Camera, LayoutDashboard, Plus, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Plus, LogOut, Menu, X } from 'lucide-react';
 
 import { Shield } from 'lucide-react';
 
