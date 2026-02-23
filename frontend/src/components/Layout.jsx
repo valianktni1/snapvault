@@ -15,6 +15,8 @@ function SidebarContent({ onClose }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const adminUser = user?.role === 'admin';
+  const navItems = getNavItems(adminUser);
 
   const handleLogout = () => {
     logout();
