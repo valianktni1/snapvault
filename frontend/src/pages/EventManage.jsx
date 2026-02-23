@@ -58,7 +58,7 @@ export default function EventManage() {
 
   return (
     <Layout title={event.title}>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <button
@@ -85,38 +85,49 @@ export default function EventManage() {
           </div>
         </div>
 
+        {/* Event Title Banner */}
+        <div className="rounded-2xl overflow-hidden border border-slate-100 shadow-sm mb-6">
+          <div
+            className="h-28 flex flex-col items-center justify-center px-8 text-center"
+            style={{ backgroundColor: template.bg }}
+          >
+            <h2 style={{
+              color: template.text,
+              fontFamily: template.headerFont,
+              fontSize: 'clamp(20px, 4vw, 28px)',
+              fontWeight: '700',
+              lineHeight: '1.2'
+            }}>
+              {event.title}
+            </h2>
+            {event.subtitle && (
+              <p style={{ color: template.accent, fontSize: '14px', marginTop: '6px' }}>
+                {event.subtitle}
+              </p>
+            )}
+          </div>
+          <div className="px-5 py-2 bg-white flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: template.accent }} />
+            <span className="text-sm text-slate-600">{template.name}</span>
+            <span className="text-slate-300">·</span>
+            <span className="text-sm text-slate-500 capitalize">{event.event_type}</span>
+          </div>
+        </div>
+
+        {/* PRINTABLE QR CARDS - FIRST SECTION */}
+        <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm mb-6">
+          <PrintableQRCards
+            eventType={event.event_type}
+            eventTitle={event.title}
+            eventSubtitle={event.subtitle}
+            guestUrl={guestUrl}
+          />
+        </div>
+
+        {/* Event Details & QR Code Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Left: Event Info */}
           <div className="lg:col-span-2 space-y-5">
-            {/* Template Preview */}
-            <div className="rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
-              <div
-                className="h-36 flex flex-col items-center justify-center px-8 text-center"
-                style={{ backgroundColor: template.bg }}
-              >
-                <h2 style={{
-                  color: template.text,
-                  fontFamily: template.headerFont,
-                  fontSize: 'clamp(20px, 4vw, 28px)',
-                  fontWeight: '700',
-                  lineHeight: '1.2'
-                }}>
-                  {event.title}
-                </h2>
-                {event.subtitle && (
-                  <p style={{ color: template.accent, fontSize: '14px', marginTop: '6px' }}>
-                    {event.subtitle}
-                  </p>
-                )}
-              </div>
-              <div className="px-5 py-3 bg-white flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: template.accent }} />
-                <span className="text-sm text-slate-600">{template.name}</span>
-                <span className="text-slate-300">·</span>
-                <span className="text-sm text-slate-500 capitalize">{event.event_type}</span>
-              </div>
-            </div>
-
             {/* Details Card */}
             <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
               <h3 className="font-bold text-slate-900 mb-4">Event Details</h3>
@@ -169,21 +180,18 @@ export default function EventManage() {
             </button>
           </div>
 
-          {/* Right: QR Code */}
+          {/* Right: Quick Share QR Code */}
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-              <h3 className="font-bold text-slate-900 mb-4">Share with Guests</h3>
+              <h3 className="font-bold text-slate-900 mb-4">Quick Share</h3>
               <div className="flex justify-center mb-4">
                 <div
                   className="p-3 bg-white rounded-2xl border-2 border-slate-100 shadow-sm"
                   data-testid="qr-code"
                 >
-                  <QRCodeSVG value={guestUrl} size={148} />
+                  <QRCodeSVG value={guestUrl} size={120} />
                 </div>
               </div>
-              <p className="text-xs text-slate-400 text-center mb-4 leading-relaxed">
-                Guests scan this QR code to upload photos and videos
-              </p>
 
               <div className="bg-slate-50 rounded-xl p-3 mb-3 border border-slate-100">
                 <p className="text-xs text-slate-400 mb-1">Guest Upload Link</p>
@@ -223,16 +231,6 @@ export default function EventManage() {
               Preview Guest Page
             </a>
           </div>
-        </div>
-
-        {/* Printable QR Cards Section */}
-        <div className="mt-8 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
-          <PrintableQRCards
-            eventType={event.event_type}
-            eventTitle={event.title}
-            eventSubtitle={event.subtitle}
-            guestUrl={guestUrl}
-          />
         </div>
       </div>
     </Layout>
