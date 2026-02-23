@@ -224,6 +224,16 @@ export default function EventManage() {
             </a>
           </div>
         </div>
+
+        {/* Printable QR Cards Section */}
+        <div className="mt-8 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+          <PrintableQRCards
+            eventType={event.event_type}
+            eventTitle={event.title}
+            eventSubtitle={event.subtitle}
+            guestUrl={guestUrl}
+          />
+        </div>
       </div>
     </Layout>
   );
