@@ -46,14 +46,21 @@ Deployed at events.snapvault.uk on TrueNAS Scale.
 
 ## What's Been Implemented
 - **2026-02-xx**: Full MVP
-  - JWT auth (register/login)
-  - Event CRUD with 12 templates
+  - JWT auth (register/login) with role system (admin/organizer)
+  - Event CRUD with 12 templates (4 per Wedding/Birthday/Corporate)
   - Guest upload page (themed, drag & drop, progress bar)
+  - Voice/audio message uploads (.mp3, .wav, .ogg, .aac, .m4a, .flac)
   - Video compression via FFmpeg (CRF 18, 1080p max, threshold 80MB)
-  - Organizer gallery with lightbox, download, delete
+  - Organizer gallery with lightbox, download, delete (remove inappropriate content)
+  - **Bulk ZIP download** per event (organizer + admin)
   - QR code generation
   - Dashboard with stats
   - 3-step event creation wizard
+  - **Admin Panel** (/admin): Full platform control
+    - Stats: total users, events, media files, storage used
+    - All events table with organizer info, view/download/delete actions
+    - Users management table with delete user + all their data
+    - Admin access controlled by ADMIN_EMAIL env variable
 
 ## Prioritized Backlog
 ### P0 (Critical)
