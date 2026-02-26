@@ -1,0 +1,155 @@
+# SnapVault - TrueNAS Scale / Dockge Deployment
+# GitHub: https://github.com/valianktni1/snapvault
+# Host: galleries.snapvault.uk
+
+version: "3.8"
+
+services:
+  # ===========================================
+  # MongoDB Database
+  # ===========================================
+  mongodb:
+    image: mongo:7.0
+    container_name: snapvault-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: snapvault
+    volumes:
+      - /mnt/apps/snapvaultapp/mongodb:/data/db
+    networks:
+      - snapvault-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ===========================================
+  # Backend - FastAPI
+  # ===========================================
+  backend:
+    build:
+      context: https://github.com/valianktni1/snapvault.git
+      dockerfile: docker/Dockerfile.backend
+    container_name: snapvault-backend
+    restart: unless-stopped
+    environment:
+      # Database
+      MONGO_URL: mongodb://mongodb:27017
+      DB_NAME: snapvault
+      
+      # Security - CHANGE THIS IN PRODUCTION!
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-to-a-strong-random-string-min-32-chars}
+      
+      # Admin email - your admin account
+      ADMIN_EMAIL: admin@snapvault.uk
+      
+      # CORS - allow your domains
+      CORS_ORIGINS: "https://galleries.snapvault.uk,http://localhost:3000,http://192.168.1.100:3000"
+      
+      # Upload directory (mapped to your media storage)
+      UPLOAD_DIR: /app/uploads
+      
+      # File size limits
+      MAX_UPLOAD_SIZE_MB: "200"
+      VIDEO_COMPRESS_THRESHOLD_MB: "80"
+    volumes:
+      # Media files storage - all uploads go here
+      - /mnt/temp-tntermediate/snapvaultusers:/app/uploads
+    ports:
+      - "8001:8001"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - snapvault-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ===========================================
+  # Frontend - React (Nginx)
+  # ===========================================
+  frontend:
+    build:
+      context: https://github.com/valianktni1/snapvault.git
+      dockerfile: docker/Dockerfile.frontend
+      args:
+        # This is the PUBLIC URL users will access
+        REACT_APP_BACKEND_URL: https://galleries.snapvault.uk
+    container_name: snapvault-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - snapvault-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ===========================================
+  # Nginx Reverse Proxy (Optional but Recommended)
+  # Handles SSL termination and routing
+  # ===========================================
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: snapvault-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /mnt/apps/snapvaultapp/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /mnt/apps/snapvaultapp/nginx/ssl:/etc/nginx/ssl:ro
+      - /mnt/apps/snapvaultapp/nginx/logs:/var/log/nginx
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - snapvault-network
+
+networks:
+  snapvault-network:
+    driver: bridge
+    name: snapvault-network
+
+# ===========================================
+# DEPLOYMENT NOTES FOR TRUENAS SCALE
+# ===========================================
+#
+# 1. CREATE DIRECTORIES FIRST:
+#    mkdir -p /mnt/apps/snapvaultapp/mongodb
+#    mkdir -p /mnt/apps/snapvaultapp/nginx/ssl
+#    mkdir -p /mnt/apps/snapvaultapp/nginx/logs
+#    mkdir -p /mnt/temp-tntermediate/snapvaultusers
+#
+# 2. SET PERMISSIONS:
+#    chown -R 1000:1000 /mnt/apps/snapvaultapp
+#    chown -R 1000:1000 /mnt/temp-tntermediate/snapvaultusers
+#
+# 3. GENERATE A STRONG JWT SECRET:
+#    openssl rand -hex 32
+#    Then set JWT_SECRET_KEY in this file or as environment variable
+#
+# 4. FOR LOCAL ACCESS:
+#    - Access via http://YOUR_TRUENAS_IP:3000
+#    - API at http://YOUR_TRUENAS_IP:8001
+#
+# 5. FOR PUBLIC ACCESS (galleries.snapvault.uk):
+#    - Set up SSL certificates in /mnt/apps/snapvaultapp/nginx/ssl/
+#    - Configure your DNS to point to your public IP
+#    - Port forward 80 and 443 to your TrueNAS
+#
+# 6. FIRST RUN:
+#    - Register your admin account with email: admin@snapvault.uk
+#    - This email automatically gets admin privileges
+#
