@@ -1,87 +1,57 @@
-# SnapVault Events — PRD
+# SnapVault - Product Requirements Document
 
-## Overview
-Self-hosted guest photo & video upload platform for Weddings, Birthdays & Corporate Events.
-Deployed at events.snapvault.uk on TrueNAS Scale.
-
-## Architecture
-- **Frontend**: React 19, Tailwind CSS, shadcn/ui, react-dropzone, qrcode.react
-- **Backend**: FastAPI (Python), Motor (async MongoDB), JWT auth, FFmpeg video compression
-- **Storage**: Local filesystem at `/app/uploads` (mountable TrueNAS volume)
-- **Database**: MongoDB (`test_database`)
-
-## User Personas
-1. **Event Organizer** — Creates events, customizes templates, shares QR/link with guests, views/manages gallery
-2. **Guest** — Scans QR or follows link, uploads photos/videos without login
+## Original Problem Statement
+Build a web application called "GuestPix/SnapVault" for events (weddings, birthdays, corporate). Guests upload photos, videos, and audio. Organizers choose from printable QR card templates. Self-hosted on TrueNAS Scale via Docker/Dockge.
 
 ## Core Requirements
-- Organizer email/password auth (JWT, 30-day tokens)
-- 3 event types: Wedding, Birthday, Corporate
-- 4 templates per event type (12 total) with unique color palettes & fonts
-- Template customization: title, subtitle, date, welcome message
-- Guest upload page (public): drag & drop, 200MB max per file, multiple files
-- Video auto-compression via FFmpeg (CRF 18, max 1080p) for videos > 80MB
-- QR code generation (client-side, qrcode.react)
-- Organizer media gallery: view, download, delete, lightbox preview
-- File serving via `/api/files/{event_id}/{filename}` (UUID-based filenames)
+- **User Roles:** Admin (full platform access), Organizer (manages own events)
+- **Event Types:** Wedding, Birthday, Corporate - each with 4 templates
+- **Media Upload:** Photos, videos, audio - max 200MB, video compression >80MB
+- **QR Cards:** 4 printable templates per event type, sizes 10"x8" and 8"x6"
+- **Payment:** £40 one-time fee via PayPal.me (trust-based verification)
+- **Email:** QR card sent to organizer's email after payment (SMTP via Hostinger)
+- **Admin:** SMTP settings, password change, user/event management
 
-## Templates
-### Wedding (Playfair Display)
-- Floral Romance (rose/pink)
-- Pure Minimalist (slate/white)
-- Golden Vintage (yellow/amber)
-- Midnight Modern (navy/gold)
+## Architecture
+- **Frontend:** React + TailwindCSS + Shadcn UI
+- **Backend:** FastAPI + Motor (async MongoDB)
+- **Database:** MongoDB
+- **Deployment:** Docker Compose on TrueNAS/Dockge
 
-### Birthday (Fredoka/Chewy)
-- Confetti Party (yellow/pink)
-- Balloon Bliss (sky blue)
-- Birthday Luxe (purple/gold)
-- Kids Fun (blue/yellow, Chewy font)
+## What's Implemented (as of Feb 2026)
+- [x] User authentication (register, login, JWT)
+- [x] Event creation with type/template selection
+- [x] Media upload (photo, video, audio) with compression
+- [x] Printable QR card templates (4 per event type, 2 sizes)
+- [x] Admin dashboard (stats, events, users management)
+- [x] Admin password change
+- [x] Bulk media download as ZIP
+- [x] Guest upload page (public, no auth required)
+- [x] Docker deployment for TrueNAS
+- [x] **Payment Gate** - £40 PayPal.me integration with trust-based confirmation
+- [x] **SMTP Settings** - Admin panel for email config (pre-filled Hostinger defaults)
+- [x] **QR Card Email** - Generated QR card image sent via email after payment
+- [x] **Payment Flow** - Template selection → PayPal → Confirm → QR unlocked + emailed
 
-### Corporate (Outfit)
-- Modern Tech (dark slate/cyan)
-- Classic Professional (light slate/navy)
-- Pure Minimal (white/black)
-- Bold & Dynamic (purple/white)
+## Key Endpoints
+- `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`
+- `POST /api/auth/change-password`
+- `POST /api/events`, `GET /api/events`, `GET/PUT/DELETE /api/events/{id}`
+- `GET /api/events/{event_id}/download` (ZIP)
+- `POST /api/events/{event_id}/confirm-payment` (payment confirmation)
+- `GET/POST /api/admin/settings/smtp` (SMTP config)
+- `POST /api/admin/settings/smtp/test` (test email)
+- `GET /api/admin/stats`, `GET /api/admin/events`, `GET /api/admin/users`
+- `DELETE /api/admin/users/{id}`
+- `GET /api/guest/event/{slug}`, `POST /api/guest/event/{slug}/upload`
 
-## What's Been Implemented
-- **2026-02-xx**: Full MVP
-  - JWT auth (register/login) with role system (admin/organizer)
-  - Event CRUD with 12 templates (4 per Wedding/Birthday/Corporate)
-  - Guest upload page (themed, drag & drop, progress bar)
-  - Voice/audio message uploads (.mp3, .wav, .ogg, .aac, .m4a, .flac)
-  - Video compression via FFmpeg (CRF 18, 1080p max, threshold 80MB)
-  - Organizer gallery with lightbox, download, delete (remove inappropriate content)
-  - **Bulk ZIP download** per event (organizer + admin)
-  - QR code generation
-  - Dashboard with stats
-  - 3-step event creation wizard
-  - **Admin Panel** (/admin): Full platform control
-    - Stats: total users, events, media files, storage used
-    - All events table with organizer info, view/download/delete actions
-    - Users management table with delete user + all their data
-    - Admin access controlled by ADMIN_EMAIL env variable
+## DB Schema
+- **users:** `{email, name, hashed_password, created_at}`
+- **events:** `{title, event_type, template, subtitle, welcome_message, event_date, slug, organizer_id, is_paid, qr_template, qr_size, paid_at, created_at}`
+- **media:** `{event_id, filename, original_name, file_type, file_size, uploader_name, created_at}`
+- **settings:** `{type:"smtp", smtp_host, smtp_port, smtp_user, smtp_password}`
 
-## Prioritized Backlog
-### P0 (Critical)
-- [x] Auth system
-- [x] Event creation with templates
-- [x] Guest upload with compression
-- [x] Organizer gallery
-
-### P1 (High)
-- [ ] Bulk download (ZIP all media for an event)
-- [ ] Email notifications when guests upload
-- [ ] Event password protection
-
-### P2 (Nice to have)
-- [ ] Guest gallery view (let guests see other uploads)
-- [ ] Custom domain per event
-- [ ] Analytics dashboard (upload times, device types)
-- [ ] Watermarking for downloaded images
-
-## Self-Hosting Notes
-- Mount TrueNAS volume to `/app/uploads`
-- Set `JWT_SECRET_KEY` in `/app/backend/.env` to a secure random string
-- Set `UPLOAD_DIR` env var if using custom storage path
-- FFmpeg required (installed in container)
+## Backlog
+- P2: Analytics/reporting for events
+- P2: Customizable payment amount per event
+- P3: Automated PayPal IPN/webhook verification
