@@ -202,6 +202,9 @@ export default function Auth({ defaultTab = 'login' }) {
           <p className="text-center text-xs text-slate-400 mt-6">
             Your data stays on your server. Always.
           </p>
+          <p className="text-center text-xs text-slate-400 mt-3" data-testid="footer-credit">
+            SnapVault designed and hosted by Weddings By Mark
+          </p>
         </div>
       </div>
     </div>
