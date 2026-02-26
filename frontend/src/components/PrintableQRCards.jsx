@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import QRCode from 'qrcode';
 import { Printer, Download, Check, Heart, Cake, Briefcase } from 'lucide-react';
 
 // Size options in inches and pixels (96 DPI for screen, will scale for print)
