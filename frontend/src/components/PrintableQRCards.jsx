@@ -406,14 +406,14 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
       </html>
     `);
     
-    printWindow.document.close();
-    printWindow.focus();
+    printWindow2.document.close();
+    printWindow2.focus();
     
     setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
+      printWindow2.print();
+      printWindow2.close();
     }, 1000);
-  };
+  }, [selectedTemplate, selectedSize, guestUrl, eventTitle, eventSubtitle, eventType]);
 
   const handleDownload = useCallback(async () => {
     if (!selectedTemplate) return;
