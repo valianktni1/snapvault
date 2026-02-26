@@ -336,9 +336,10 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
 
     const sizeStyle = SIZE_OPTIONS.find(s => s.key === selectedSize);
     const printWindow = window.open('', '', 'width=1000,height=800');
-    const sizeStyle = SIZE_OPTIONS.find(s => s.key === selectedSize);
+    const printWindow2 = printWindow;
+    const sizeStyleRef = sizeStyle;
     
-    printWindow.document.write(`
+    printWindow2.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
@@ -354,8 +355,8 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
               background: #f5f5f5;
             }
             .qr-card {
-              width: ${sizeStyle.printWidth};
-              height: ${sizeStyle.printHeight};
+              width: ${sizeStyleRef.printWidth};
+              height: ${sizeStyleRef.printHeight};
               background: ${selectedTemplate.bgColor};
               border: 4px solid ${selectedTemplate.borderColor};
               border-radius: 12px;
@@ -393,12 +394,12 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
               ${eventSubtitle ? `<p class="event-subtitle">${eventSubtitle}</p>` : ''}
             </div>
             <div class="qr-container">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(guestUrl)}" alt="QR Code" style="width: 35vmin; height: 35vmin;" />
+              <img src="${qrDataUrl}" alt="QR Code" style="width: 35vmin; height: 35vmin;" />
             </div>
             <div class="footer">
               <p class="scan-text">Scan to Upload</p>
               <p class="photos-text">Photos & Videos</p>
-              <p class="brand">❤️ SnapVault</p>
+              <p class="brand">SnapVault</p>
             </div>
           </div>
         </body>
