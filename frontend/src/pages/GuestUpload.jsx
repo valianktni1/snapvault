@@ -351,6 +351,9 @@ export default function GuestUpload() {
         <p style={{ color: theme.text, opacity: 0.3, fontSize: '11px' }}>
           Powered by SnapVault Events · Your uploads are private and secure
         </p>
+        <p style={{ color: theme.text, opacity: 0.35, fontSize: '11px', marginTop: '4px' }} data-testid="footer-credit">
+          SnapVault designed and hosted by Weddings By Mark
+        </p>
       </div>
     </div>
   );
