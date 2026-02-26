@@ -32,6 +32,9 @@ Build a web application called "GuestPix/SnapVault" for events (weddings, birthd
 - [x] **SMTP Settings** - Admin panel for email config (pre-filled Hostinger defaults)
 - [x] **QR Card Email** - Generated QR card image sent via email after payment
 - [x] **Payment Flow** - Template selection → PayPal → Confirm → QR unlocked + emailed
+- [x] **New Logo** - SnapVault padlock/swirl branding logo
+- [x] **QR Card Download Fix** - Local QR generation (no external API/CORS issues)
+- [x] **Footer Branding** - "SnapVault designed and hosted by Weddings By Mark" on every page
 
 ## Key Endpoints
 - `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`
