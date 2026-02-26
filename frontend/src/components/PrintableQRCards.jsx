@@ -319,9 +319,22 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
   const templates = QR_CARD_TEMPLATES[eventType] || QR_CARD_TEMPLATES.wedding;
   const sizeConfig = SIZE_OPTIONS.find(s => s.key === selectedSize) || SIZE_OPTIONS[0];
 
-  const handlePrint = () => {
+  const handlePrint = useCallback(async () => {
     if (!selectedTemplate) return;
-    
+
+    // Generate QR code data URL locally
+    let qrDataUrl;
+    try {
+      qrDataUrl = await QRCode.toDataURL(guestUrl || 'https://example.com', {
+        width: 300,
+        errorCorrectionLevel: 'H',
+        margin: 1
+      });
+    } catch {
+      qrDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(guestUrl)}`;
+    }
+
+    const sizeStyle = SIZE_OPTIONS.find(s => s.key === selectedSize);
     const printWindow = window.open('', '', 'width=1000,height=800');
     const sizeStyle = SIZE_OPTIONS.find(s => s.key === selectedSize);
     
