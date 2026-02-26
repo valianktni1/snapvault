@@ -716,24 +716,147 @@ async def admin_delete_user(user_id: str, current_user=Depends(get_admin_user)):
     return {"message": "User and all their data deleted"}
 
 
-app.include_router(api_router)
+# --- SMTP Settings Routes (Admin) ---
+class SMTPSettingsInput(BaseModel):
+    smtp_host: str
+    smtp_port: int
+    smtp_user: str
+    smtp_password: str = ""
 
 
-# --- Health Check Endpoint ---
+@api_router.get("/admin/settings/smtp")
+async def get_smtp_settings(current_user=Depends(get_admin_user)):
+    settings = await db.settings.find_one({"type": "smtp"})
+    if not settings:
+        return {
+            "smtp_host": "smtp.hostinger.com",
+            "smtp_port": 465,
+            "smtp_user": "admin@snapvault.uk",
+            "smtp_password": ""
+        }
+    return {
+        "smtp_host": settings["smtp_host"],
+        "smtp_port": settings["smtp_port"],
+        "smtp_user": settings["smtp_user"],
+        "smtp_password": "********" if settings.get("smtp_password") else ""
+    }
+
+
+@api_router.post("/admin/settings/smtp")
+async def save_smtp_settings(data: SMTPSettingsInput, current_user=Depends(get_admin_user)):
+    existing = await db.settings.find_one({"type": "smtp"})
+    doc = {
+        "type": "smtp",
+        "smtp_host": data.smtp_host,
+        "smtp_port": data.smtp_port,
+        "smtp_user": data.smtp_user,
+    }
+    # Only update password if a real value was provided (not the mask)
+    if data.smtp_password and data.smtp_password != "********":
+        doc["smtp_password"] = data.smtp_password
+    elif existing and existing.get("smtp_password"):
+        doc["smtp_password"] = existing["smtp_password"]
+    else:
+        doc["smtp_password"] = ""
+
+    await db.settings.update_one({"type": "smtp"}, {"$set": doc}, upsert=True)
+    return {"message": "SMTP settings saved successfully"}
+
+
+@api_router.post("/admin/settings/smtp/test")
+async def test_smtp_settings(current_user=Depends(get_admin_user)):
+    """Send a test email to the admin to verify SMTP configuration."""
+    settings = await db.settings.find_one({"type": "smtp"})
+    if not settings or not settings.get("smtp_password"):
+        raise HTTPException(400, "SMTP password not configured. Please save your password first.")
+    try:
+        msg = MIMEMultipart()
+        msg["From"] = settings["smtp_user"]
+        msg["To"] = current_user["email"]
+        msg["Subject"] = "SnapVault SMTP Test"
+        msg.attach(MIMEText("<p>This is a test email from SnapVault. Your SMTP settings are working correctly!</p>", "html"))
+
+        port = int(settings["smtp_port"])
+        if port == 465:
+            with smtplib.SMTP_SSL(settings["smtp_host"], port, timeout=15) as server:
+                server.login(settings["smtp_user"], settings["smtp_password"])
+                server.sendmail(settings["smtp_user"], current_user["email"], msg.as_string())
+        else:
+            with smtplib.SMTP(settings["smtp_host"], port, timeout=15) as server:
+                server.starttls()
+                server.login(settings["smtp_user"], settings["smtp_password"])
+                server.sendmail(settings["smtp_user"], current_user["email"], msg.as_string())
+        return {"message": f"Test email sent to {current_user['email']}"}
+    except Exception as e:
+        raise HTTPException(400, f"SMTP test failed: {str(e)}")
+
+
+# --- Payment Confirmation Route ---
+class PaymentConfirm(BaseModel):
+    qr_template: str
+    qr_size: str = "10x8"
+    guest_url: str
+
+
+@api_router.post("/events/{event_id}/confirm-payment")
+async def confirm_payment(event_id: str, data: PaymentConfirm, current_user=Depends(get_current_user)):
+    event = await db.events.find_one({
+        "_id": ObjectId(event_id),
+        "organizer_id": str(current_user["_id"])
+    })
+    if not event:
+        raise HTTPException(404, "Event not found")
+
+    if event.get("is_paid"):
+        raise HTTPException(400, "Payment already confirmed for this event")
+
+    await db.events.update_one(
+        {"_id": ObjectId(event_id)},
+        {"$set": {
+            "is_paid": True,
+            "qr_template": data.qr_template,
+            "qr_size": data.qr_size,
+            "paid_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+
+    # Generate QR card image
+    email_sent = False
+    try:
+        qr_image = generate_qr_card_image(
+            event_type=event["event_type"],
+            template_key=data.qr_template,
+            size_key=data.qr_size,
+            event_title=event["title"],
+            event_subtitle=event.get("subtitle", ""),
+            guest_url=data.guest_url
+        )
+        email_sent = await send_qr_email(
+            to_email=current_user["email"],
+            event_title=event["title"],
+            qr_image_bytes=qr_image
+        )
+    except Exception as e:
+        logger.error(f"QR card generation/email failed: {e}")
+
+    return {
+        "message": "Payment confirmed",
+        "is_paid": True,
+        "email_sent": email_sent
+    }
+
+
+# --- Health Check ---
 @api_router.get("/health")
 async def health_check():
-    """Health check endpoint for Docker/Kubernetes"""
     try:
-        # Test MongoDB connection
         await db.command("ping")
-        return {
-            "status": "healthy",
-            "database": "connected",
-            "upload_dir": str(UPLOAD_DIR),
-            "upload_dir_exists": UPLOAD_DIR.exists()
-        }
+        return {"status": "healthy", "database": "connected"}
     except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Unhealthy: {str(e)}")
+        raise HTTPException(503, f"Unhealthy: {str(e)}")
+
+
+app.include_router(api_router)
 
 
 @app.on_event("shutdown")
