@@ -347,6 +347,13 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* Settings Tab */}
+      {tab === 'settings' && (
+        <div className="space-y-6">
+          <SMTPSettings />
+        </div>
+      )}
+
       {/* Account Settings */}
       <AccountSettings />
     </Layout>
