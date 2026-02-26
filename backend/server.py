@@ -11,7 +11,11 @@ from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from dotenv import load_dotenv
-import os, uuid, subprocess, logging, shutil, zipfile, io
+import os, uuid, subprocess, logging, shutil, zipfile, io, smtplib, qrcode
+from PIL import Image, ImageDraw, ImageFont
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
