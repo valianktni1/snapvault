@@ -11,7 +11,15 @@ from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from dotenv import load_dotenv
-import os, uuid, subprocess, logging, shutil, zipfile, io, smtplib, qrcode
+import os
+import uuid
+import subprocess
+import logging
+import shutil
+import zipfile
+import io
+import smtplib
+import qrcode
 from PIL import Image, ImageDraw, ImageFont
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
