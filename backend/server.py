@@ -428,6 +428,7 @@ async def create_event(event_data: EventCreate, current_user=Depends(get_current
         "event_date": event_data.event_date,
         "slug": slug,
         "organizer_id": str(current_user["_id"]),
+        "is_paid": False,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     result = await db.events.insert_one(doc)
