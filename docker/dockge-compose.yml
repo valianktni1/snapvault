@@ -1,0 +1,168 @@
+# =====================================================
+# SNAPVAULT - DOCKGE DOCKER COMPOSE
+# =====================================================
+# For TrueNAS Scale with Dockge
+# GitHub: https://github.com/valianktni1/snapvault
+# Domain: galleries.snapvault.uk
+# =====================================================
+
+version: "3.8"
+
+services:
+  # ─────────────────────────────────────────────────────
+  # DATABASE - MongoDB 7.0
+  # ─────────────────────────────────────────────────────
+  snapvault-db:
+    image: mongo:7.0
+    container_name: snapvault-db
+    restart: unless-stopped
+    volumes:
+      - /mnt/apps/snapvaultapp/mongodb:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - snapvault
+
+  # ─────────────────────────────────────────────────────
+  # BACKEND - FastAPI + FFmpeg
+  # ─────────────────────────────────────────────────────
+  snapvault-api:
+    build:
+      context: https://github.com/valianktni1/snapvault.git#main
+      dockerfile: docker/Dockerfile.backend
+    container_name: snapvault-api
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      # MongoDB connection
+      MONGO_URL: mongodb://snapvault-db:27017
+      DB_NAME: snapvault
+      
+      # ⚠️ IMPORTANT: Change this to a secure random string!
+      # Generate with: openssl rand -hex 32
+      JWT_SECRET_KEY: CHANGE-ME-TO-RANDOM-32-CHAR-STRING-USE-OPENSSL
+      
+      # Your admin email - gets full admin rights
+      ADMIN_EMAIL: admin@snapvault.uk
+      
+      # Allowed origins (add your local IP)
+      CORS_ORIGINS: "https://galleries.snapvault.uk,http://localhost:3000,http://localhost,http://192.168.1.100:3000,http://192.168.1.100"
+      
+      # Upload settings
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      # All media files (photos, videos, thumbnails)
+      - /mnt/temp-tntermediate/snapvaultusers:/app/uploads
+    depends_on:
+      snapvault-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    networks:
+      - snapvault
+
+  # ─────────────────────────────────────────────────────
+  # FRONTEND - React + Nginx
+  # ─────────────────────────────────────────────────────
+  snapvault-web:
+    build:
+      context: https://github.com/valianktni1/snapvault.git#main
+      dockerfile: docker/Dockerfile.frontend
+      args:
+        # Public URL - change if using different domain
+        REACT_APP_BACKEND_URL: https://galleries.snapvault.uk
+    container_name: snapvault-web
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      snapvault-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - snapvault
+
+networks:
+  snapvault:
+    name: snapvault
+    driver: bridge
+
+# =====================================================
+# 📋 SETUP INSTRUCTIONS
+# =====================================================
+#
+# 1️⃣  CREATE DIRECTORIES (run in TrueNAS shell):
+#
+#     mkdir -p /mnt/apps/snapvaultapp/mongodb
+#     mkdir -p /mnt/temp-tntermediate/snapvaultusers
+#     chmod 777 /mnt/apps/snapvaultapp/mongodb
+#     chmod 777 /mnt/temp-tntermediate/snapvaultusers
+#
+# 2️⃣  GENERATE SECURE JWT SECRET:
+#
+#     openssl rand -hex 32
+#
+#     Copy the output and replace JWT_SECRET_KEY above
+#
+# 3️⃣  UPDATE YOUR LOCAL IP:
+#
+#     Replace 192.168.1.100 with your TrueNAS IP in CORS_ORIGINS
+#
+# 4️⃣  DEPLOY IN DOCKGE:
+#
+#     - Paste this entire file in Dockge
+#     - Click Deploy
+#     - Wait for all containers to be healthy (green)
+#
+# 5️⃣  ACCESS THE APP:
+#
+#     Local:  http://YOUR_TRUENAS_IP:3000
+#     API:    http://YOUR_TRUENAS_IP:8001/api/health
+#
+# 6️⃣  CREATE ADMIN ACCOUNT:
+#
+#     - Go to http://YOUR_TRUENAS_IP:3000
+#     - Click "Create Account"
+#     - Register with email: admin@snapvault.uk
+#     - This email automatically gets admin privileges
+#
+# 7️⃣  FOR PUBLIC ACCESS (galleries.snapvault.uk):
+#
+#     Option A: Use Cloudflare Tunnel (recommended)
+#     Option B: Use Nginx Proxy Manager in TrueNAS
+#     Option C: Port forward 80/443 + use Let's Encrypt
+#
+# =====================================================
+# 🔧 TROUBLESHOOTING
+# =====================================================
+#
+# Check container logs:
+#     docker logs snapvault-api
+#     docker logs snapvault-web
+#     docker logs snapvault-db
+#
+# Restart all containers:
+#     docker compose restart
+#
+# Rebuild after code update:
+#     docker compose build --no-cache
+#     docker compose up -d
+#
+# Check health:
+#     curl http://localhost:8001/api/health
+#
+# =====================================================
