@@ -152,7 +152,8 @@ export default function AdminDashboard() {
       <div className="flex bg-slate-100 rounded-xl p-1 w-fit mb-5 gap-0.5">
         {[
           { key: 'events', label: `All Events (${events.length})` },
-          { key: 'users', label: `Users (${users.length})` }
+          { key: 'users', label: `Users (${users.length})` },
+          { key: 'settings', label: 'Settings' }
         ].map(t => (
           <button
             key={t.key}
