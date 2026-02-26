@@ -58,14 +58,14 @@ services:
       # Media files storage - all uploads go here
       - /mnt/temp-tntermediate/snapvaultusers:/app/uploads
     ports:
-      - "8001:8001"
+      - "4001:4001"
     depends_on:
       mongodb:
         condition: service_healthy
     networks:
       - snapvault-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:4001/api/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -142,7 +142,7 @@ networks:
 #
 # 4. FOR LOCAL ACCESS:
 #    - Access via http://YOUR_TRUENAS_IP:3000
-#    - API at http://YOUR_TRUENAS_IP:8001
+#    - API at http://YOUR_TRUENAS_IP:4001
 #
 # 5. FOR PUBLIC ACCESS (galleries.snapvault.uk):
 #    - Set up SSL certificates in /mnt/apps/snapvaultapp/nginx/ssl/
