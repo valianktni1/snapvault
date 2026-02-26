@@ -32,7 +32,7 @@ services:
     container_name: snapvault-api
     restart: unless-stopped
     ports:
-      - "8001:8001"
+      - "4001:4001"
     environment:
       MONGO_URL: mongodb://snapvault-db:27017
       DB_NAME: snapvault
@@ -47,7 +47,7 @@ services:
       snapvault-db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:4001/api/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -62,7 +62,7 @@ services:
       dockerfile: docker/Dockerfile.frontend
       args:
         # ⚠️ Replace 192.168.1.XXX with YOUR TrueNAS IP
-        REACT_APP_BACKEND_URL: http://192.168.1.XXX:8001
+        REACT_APP_BACKEND_URL: http://192.168.1.XXX:4001
     container_name: snapvault-web
     restart: unless-stopped
     ports:
