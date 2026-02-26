@@ -511,6 +511,23 @@ async def admin_delete_user(user_id: str, current_user=Depends(get_admin_user)):
 app.include_router(api_router)
 
 
+# --- Health Check Endpoint ---
+@api_router.get("/health")
+async def health_check():
+    """Health check endpoint for Docker/Kubernetes"""
+    try:
+        # Test MongoDB connection
+        await db.command("ping")
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "upload_dir": str(UPLOAD_DIR),
+            "upload_dir_exists": UPLOAD_DIR.exists()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Unhealthy: {str(e)}")
+
+
 @app.on_event("shutdown")
 async def shutdown():
     client.close()
