@@ -346,21 +346,141 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Admin Setup Note */}
-      <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-amber-800 mb-1">Self-Hosting Note</p>
-            <p className="text-xs text-amber-700 leading-relaxed">
-              Admin access is controlled by <code className="bg-amber-100 px-1 rounded">ADMIN_EMAIL</code> in{' '}
-              <code className="bg-amber-100 px-1 rounded">/app/backend/.env</code>.
-              Change this to your own email on your TrueNAS deployment.
-              The JWT_SECRET_KEY should also be changed to a strong random string.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Account Settings */}
+      <AccountSettings />
     </Layout>
+  );
+}
+
+function AccountSettings() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setMessage({ type: '', text: '' });
+
+    if (newPassword !== confirmPassword) {
+      setMessage({ type: 'error', text: 'New passwords do not match' });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setMessage({ type: 'error', text: 'Password must be at least 6 characters' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.post('/auth/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword
+      });
+      setMessage({ type: 'success', text: 'Password changed successfully!' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPassword(false);
+    } catch (err) {
+      setMessage({ 
+        type: 'error', 
+        text: err.response?.data?.detail || 'Failed to change password' 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-6 bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-slate-600 rounded-xl flex items-center justify-center">
+            <Shield className="w-4 h-4 text-white" />
+          </div>
+          <h3 className="font-bold text-slate-900">Account Settings</h3>
+        </div>
+        <button
+          data-testid="toggle-change-password"
+          onClick={() => setShowPassword(!showPassword)}
+          className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+        >
+          {showPassword ? 'Cancel' : 'Change Password'}
+        </button>
+      </div>
+
+      {showPassword && (
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          {message.text && (
+            <div className={`p-3 rounded-xl text-sm ${
+              message.type === 'error' 
+                ? 'bg-red-50 text-red-700 border border-red-200' 
+                : 'bg-green-50 text-green-700 border border-green-200'
+            }`}>
+              {message.text}
+            </div>
+          )}
+          
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Current Password
+            </label>
+            <input
+              type="password"
+              data-testid="current-password-input"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              required
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+              placeholder="Enter current password"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              New Password
+            </label>
+            <input
+              type="password"
+              data-testid="new-password-input"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              minLength={6}
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+              placeholder="Enter new password (min 6 characters)"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Confirm New Password
+            </label>
+            <input
+              type="password"
+              data-testid="confirm-password-input"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+              placeholder="Confirm new password"
+            />
+          </div>
+
+          <button
+            type="submit"
+            data-testid="save-password-btn"
+            disabled={loading}
+            className="w-full py-2.5 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-all disabled:opacity-50"
+          >
+            {loading ? 'Saving...' : 'Update Password'}
+          </button>
+        </form>
+      )}
+    </div>
   );
 }
