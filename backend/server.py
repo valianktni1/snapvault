@@ -172,6 +172,181 @@ def fmt_user_response(user: dict) -> dict:
     }
 
 
+# --- QR Card Templates (mirrors frontend PrintableQRCards.jsx) ---
+QR_CARD_TEMPLATES = {
+    "wedding": {
+        "elegant_frame": {"bgColor": "#FDF8F3", "borderColor": "#D4AF37", "textColor": "#2C1810", "accentColor": "#D4AF37"},
+        "romantic_floral": {"bgColor": "#FFF5F7", "borderColor": "#E8B4BC", "textColor": "#6B2D3D", "accentColor": "#D4869C"},
+        "modern_minimal": {"bgColor": "#FFFFFF", "borderColor": "#1A1A1A", "textColor": "#1A1A1A", "accentColor": "#666666"},
+        "rustic_kraft": {"bgColor": "#F5E6D3", "borderColor": "#8B7355", "textColor": "#4A3728", "accentColor": "#6B8E23"},
+    },
+    "birthday": {
+        "confetti_party": {"bgColor": "#FFF9E6", "borderColor": "#FF6B9D", "textColor": "#333333", "accentColor": "#FF6B9D"},
+        "balloon_fun": {"bgColor": "#E8F4FD", "borderColor": "#4ECDC4", "textColor": "#2C3E50", "accentColor": "#FF6B6B"},
+        "elegant_gold": {"bgColor": "#1A1A2E", "borderColor": "#FFD700", "textColor": "#FFFFFF", "accentColor": "#FFD700"},
+        "rainbow_bright": {"bgColor": "#FFFFFF", "borderColor": "#FF6B6B", "textColor": "#333333", "accentColor": "#4ECDC4"},
+    },
+    "corporate": {
+        "professional_navy": {"bgColor": "#0F2744", "borderColor": "#3B82F6", "textColor": "#FFFFFF", "accentColor": "#60A5FA"},
+        "clean_white": {"bgColor": "#FFFFFF", "borderColor": "#E5E7EB", "textColor": "#111827", "accentColor": "#6B7280"},
+        "tech_modern": {"bgColor": "#111827", "borderColor": "#10B981", "textColor": "#FFFFFF", "accentColor": "#10B981"},
+        "executive_grey": {"bgColor": "#F3F4F6", "borderColor": "#374151", "textColor": "#1F2937", "accentColor": "#4B5563"},
+    },
+}
+
+QR_CARD_SIZES = {
+    "10x8": (960, 768),
+    "8x6": (768, 576),
+}
+
+
+def hex_to_rgb(hex_color: str) -> tuple:
+    hex_color = hex_color.lstrip('#')
+    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+
+def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
+                           event_title: str, event_subtitle: str, guest_url: str) -> bytes:
+    """Generate a printable QR card image with the QR code centered."""
+    templates = QR_CARD_TEMPLATES.get(event_type, QR_CARD_TEMPLATES["wedding"])
+    tmpl = templates.get(template_key)
+    if not tmpl:
+        tmpl = list(templates.values())[0]
+
+    width, height = QR_CARD_SIZES.get(size_key, (960, 768))
+
+    bg_rgb = hex_to_rgb(tmpl["bgColor"])
+    border_rgb = hex_to_rgb(tmpl["borderColor"])
+    text_rgb = hex_to_rgb(tmpl["textColor"])
+    accent_rgb = hex_to_rgb(tmpl["accentColor"])
+
+    img = Image.new("RGB", (width, height), bg_rgb)
+    draw = ImageDraw.Draw(img)
+
+    # Draw border
+    bw = 6
+    draw.rectangle([bw // 2, bw // 2, width - bw // 2, height - bw // 2], outline=border_rgb, width=bw)
+
+    # Load fonts
+    try:
+        serif_bold = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf", int(width * 0.052))
+        sans_reg = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", int(width * 0.028))
+        sans_bold = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", int(width * 0.035))
+    except Exception:
+        serif_bold = ImageFont.load_default()
+        sans_reg = ImageFont.load_default()
+        sans_bold = ImageFont.load_default()
+
+    # Header subtitle text
+    header_map = {"wedding": "SHARE YOUR MEMORIES", "birthday": "CAPTURE THE FUN!", "corporate": "EVENT PHOTOS"}
+    header_text = header_map.get(event_type, "EVENT PHOTOS")
+    hbox = draw.textbbox((0, 0), header_text, font=sans_reg)
+    draw.text(((width - (hbox[2] - hbox[0])) // 2, int(height * 0.07)), header_text, fill=accent_rgb, font=sans_reg)
+
+    # Event title
+    tbox = draw.textbbox((0, 0), event_title, font=serif_bold)
+    title_w = tbox[2] - tbox[0]
+    # If title is too wide, truncate
+    display_title = event_title
+    if title_w > width * 0.85:
+        while title_w > width * 0.85 and len(display_title) > 10:
+            display_title = display_title[:-1]
+            tbox = draw.textbbox((0, 0), display_title + "...", font=serif_bold)
+            title_w = tbox[2] - tbox[0]
+        display_title += "..."
+        tbox = draw.textbbox((0, 0), display_title, font=serif_bold)
+        title_w = tbox[2] - tbox[0]
+    draw.text(((width - title_w) // 2, int(height * 0.13)), display_title, fill=text_rgb, font=serif_bold)
+
+    # Event subtitle
+    if event_subtitle:
+        sbox = draw.textbbox((0, 0), event_subtitle, font=sans_reg)
+        draw.text(((width - (sbox[2] - sbox[0])) // 2, int(height * 0.21)), event_subtitle, fill=accent_rgb, font=sans_reg)
+
+    # Generate QR code image
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=2)
+    qr.add_data(guest_url)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+
+    qr_size = int(min(width, height) * 0.40)
+    qr_img = qr_img.resize((qr_size, qr_size), Image.LANCZOS)
+
+    # Center the QR code
+    qr_x = (width - qr_size) // 2
+    qr_y = (height - qr_size) // 2
+
+    # QR white background + border
+    pad = 14
+    draw.rectangle(
+        [qr_x - pad, qr_y - pad, qr_x + qr_size + pad, qr_y + qr_size + pad],
+        fill=(255, 255, 255), outline=border_rgb, width=4
+    )
+    img.paste(qr_img, (qr_x, qr_y))
+
+    # Footer
+    ft = "Scan to Upload"
+    fbox = draw.textbbox((0, 0), ft, font=sans_bold)
+    draw.text(((width - (fbox[2] - fbox[0])) // 2, int(height * 0.83)), ft, fill=text_rgb, font=sans_bold)
+
+    pt = "Photos & Videos"
+    pbox = draw.textbbox((0, 0), pt, font=sans_reg)
+    draw.text(((width - (pbox[2] - pbox[0])) // 2, int(height * 0.89)), pt, fill=accent_rgb, font=sans_reg)
+
+    bt = "SnapVault"
+    bbox = draw.textbbox((0, 0), bt, font=sans_reg)
+    draw.text(((width - (bbox[2] - bbox[0])) // 2, int(height * 0.94)), bt, fill=accent_rgb, font=sans_reg)
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf.getvalue()
+
+
+async def send_qr_email(to_email: str, event_title: str, qr_image_bytes: bytes) -> bool:
+    """Send the QR card image via email using saved SMTP settings."""
+    settings = await db.settings.find_one({"type": "smtp"})
+    if not settings or not settings.get("smtp_password"):
+        logger.warning("SMTP not configured or password missing — skipping email")
+        return False
+
+    try:
+        msg = MIMEMultipart()
+        msg["From"] = settings["smtp_user"]
+        msg["To"] = to_email
+        msg["Subject"] = f"Your SnapVault QR Card — {event_title}"
+
+        html = f"""<html><body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+<h2 style="color:#1a1a2e;">Your QR Card is Ready!</h2>
+<p>Thank you for your payment. Your printable QR card for <strong>{event_title}</strong> is attached to this email.</p>
+<p>Print this card and place it at your venue for guests to scan and upload their photos and videos.</p>
+<p style="color:#666;font-size:14px;margin-top:20px;">— The SnapVault Team</p>
+</body></html>"""
+        msg.attach(MIMEText(html, "html"))
+
+        safe_name = "".join(c if c.isalnum() or c in " _-" else "_" for c in event_title)
+        image_part = MIMEImage(qr_image_bytes, name=f"{safe_name}_QR_Card.png")
+        image_part.add_header("Content-Disposition", "attachment", filename=f"{safe_name}_QR_Card.png")
+        msg.attach(image_part)
+
+        port = int(settings["smtp_port"])
+        if port == 465:
+            with smtplib.SMTP_SSL(settings["smtp_host"], port, timeout=30) as server:
+                server.login(settings["smtp_user"], settings["smtp_password"])
+                server.sendmail(settings["smtp_user"], to_email, msg.as_string())
+        else:
+            with smtplib.SMTP(settings["smtp_host"], port, timeout=30) as server:
+                server.starttls()
+                server.login(settings["smtp_user"], settings["smtp_password"])
+                server.sendmail(settings["smtp_user"], to_email, msg.as_string())
+
+        logger.info(f"QR card email sent to {to_email} for event '{event_title}'")
+        return True
+    except Exception as e:
+        logger.error(f"Email sending failed: {e}")
+        return False
+
+
 # --- Auth Routes ---
 @api_router.post("/auth/register")
 async def register(user_data: UserCreate):
