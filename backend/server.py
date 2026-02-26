@@ -196,6 +196,31 @@ async def me(current_user=Depends(get_current_user)):
     return fmt_user_response(current_user)
 
 
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@api_router.post("/auth/change-password")
+async def change_password(data: ChangePassword, current_user=Depends(get_current_user)):
+    # Verify current password
+    if not pwd_context.verify(data.current_password, current_user["hashed_password"]):
+        raise HTTPException(400, "Current password is incorrect")
+    
+    # Validate new password
+    if len(data.new_password) < 6:
+        raise HTTPException(400, "New password must be at least 6 characters")
+    
+    # Update password
+    new_hash = pwd_context.hash(data.new_password)
+    await db.users.update_one(
+        {"_id": current_user["_id"]},
+        {"$set": {"hashed_password": new_hash}}
+    )
+    
+    return {"message": "Password changed successfully"}
+
+
 # --- Event Routes ---
 @api_router.get("/events")
 async def get_events(current_user=Depends(get_current_user)):
