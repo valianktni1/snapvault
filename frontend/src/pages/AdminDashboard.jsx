@@ -360,6 +360,147 @@ export default function AdminDashboard() {
   );
 }
 
+function SMTPSettings() {
+  const [smtp, setSmtp] = useState({ smtp_host: '', smtp_port: 465, smtp_user: '', smtp_password: '' });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    api.get('/admin/settings/smtp')
+      .then(res => setSmtp(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setMessage({ type: '', text: '' });
+    try {
+      await api.post('/admin/settings/smtp', smtp);
+      setMessage({ type: 'success', text: 'SMTP settings saved successfully' });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Failed to save' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    setMessage({ type: '', text: '' });
+    try {
+      const res = await api.post('/admin/settings/smtp/test');
+      setMessage({ type: 'success', text: res.data.message });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'SMTP test failed' });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  if (loading) return <div className="h-40 bg-slate-200 rounded-2xl animate-pulse" />;
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
+          <Mail className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="font-bold text-slate-900">Email (SMTP) Settings</h3>
+          <p className="text-xs text-slate-500">Used to send QR cards to organisers after payment</p>
+        </div>
+      </div>
+
+      {message.text && (
+        <div className={`p-3 rounded-xl text-sm mb-4 flex items-center gap-2 ${
+          message.type === 'error'
+            ? 'bg-red-50 text-red-700 border border-red-200'
+            : 'bg-green-50 text-green-700 border border-green-200'
+        }`}>
+          {message.type === 'success' ? <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> : <AlertTriangle className="w-4 h-4 flex-shrink-0" />}
+          {message.text}
+        </div>
+      )}
+
+      <form onSubmit={handleSave} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">SMTP Host</label>
+            <input
+              data-testid="smtp-host-input"
+              value={smtp.smtp_host}
+              onChange={e => setSmtp(s => ({ ...s, smtp_host: e.target.value }))}
+              required
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+              placeholder="smtp.hostinger.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">SMTP Port</label>
+            <input
+              data-testid="smtp-port-input"
+              type="number"
+              value={smtp.smtp_port}
+              onChange={e => setSmtp(s => ({ ...s, smtp_port: parseInt(e.target.value) || 465 }))}
+              required
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">SMTP User (Email)</label>
+          <input
+            data-testid="smtp-user-input"
+            type="email"
+            value={smtp.smtp_user}
+            onChange={e => setSmtp(s => ({ ...s, smtp_user: e.target.value }))}
+            required
+            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+            placeholder="admin@snapvault.uk"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">SMTP Password</label>
+          <input
+            data-testid="smtp-password-input"
+            type="password"
+            value={smtp.smtp_password}
+            onChange={e => setSmtp(s => ({ ...s, smtp_password: e.target.value }))}
+            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+            placeholder="Enter your SMTP password"
+          />
+          <p className="text-xs text-slate-400 mt-1">Leave blank to keep existing password unchanged</p>
+        </div>
+
+        <div className="flex flex-wrap gap-3 pt-2">
+          <button
+            type="submit"
+            data-testid="save-smtp-btn"
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-all disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : 'Save Settings'}
+          </button>
+          <button
+            type="button"
+            data-testid="test-smtp-btn"
+            onClick={handleTest}
+            disabled={testing}
+            className="flex items-center gap-2 px-5 py-2.5 border border-slate-200 rounded-xl font-semibold text-sm text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-50"
+          >
+            <Send className="w-4 h-4" />
+            {testing ? 'Sending...' : 'Send Test Email'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 function AccountSettings() {
   const [showPassword, setShowPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
