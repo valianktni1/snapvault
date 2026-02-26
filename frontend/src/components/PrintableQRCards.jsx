@@ -406,88 +406,134 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
     setDownloading(true);
 
     try {
-      // Create a canvas for the download
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const dpi = 300; // High DPI for print quality
-      const scale = dpi / 96;
-      
+      const scale = 300 / 96; // 300 DPI
+
       canvas.width = sizeConfig.width * scale;
       canvas.height = sizeConfig.height * scale;
-      
-      // Fill background
+      const W = canvas.width;
+      const H = canvas.height;
+
+      // Background
       ctx.fillStyle = selectedTemplate.bgColor;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw border
+      ctx.fillRect(0, 0, W, H);
+
+      // Border
+      const bw = 8 * scale;
       ctx.strokeStyle = selectedTemplate.borderColor;
-      ctx.lineWidth = 12 * scale;
-      ctx.strokeRect(6 * scale, 6 * scale, canvas.width - 12 * scale, canvas.height - 12 * scale);
-      
-      // Load and draw QR code
-      const qrImg = new Image();
-      qrImg.crossOrigin = 'anonymous';
-      
-      await new Promise((resolve, reject) => {
-        qrImg.onload = resolve;
-        qrImg.onerror = reject;
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(guestUrl)}`;
-      });
-      
-      const qrSize = Math.min(canvas.width, canvas.height) * 0.38;
-      const qrX = (canvas.width - qrSize) / 2;
-      const qrY = (canvas.height - qrSize) / 2;
-      
-      // QR code background
-      ctx.fillStyle = '#FFFFFF';
-      const padding = 20 * scale;
-      ctx.fillRect(qrX - padding, qrY - padding, qrSize + padding * 2, qrSize + padding * 2);
-      ctx.strokeStyle = selectedTemplate.borderColor;
-      ctx.lineWidth = 4 * scale;
-      ctx.strokeRect(qrX - padding, qrY - padding, qrSize + padding * 2, qrSize + padding * 2);
-      
-      // Draw QR code
-      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-      
-      // Draw text
+      ctx.lineWidth = bw;
+      ctx.strokeRect(bw / 2, bw / 2, W - bw, H - bw);
+
+      // Corner decorations for elegant/floral styles
+      if (selectedTemplate.style === 'elegant') {
+        const cs = W * 0.08;
+        ctx.lineWidth = 5 * scale;
+        ctx.strokeStyle = selectedTemplate.borderColor;
+        [[0, 0, cs, 0, 0, cs], [W, 0, W - cs, 0, W, cs], [0, H, cs, H, 0, H - cs], [W, H, W - cs, H, W, H - cs]].forEach(([, , x1, y1, x2, y2]) => {
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 === x2 ? x1 : (x1 < W/2 ? bw : W - bw), y1 === y2 ? y1 : (y1 < H/2 ? bw : H - bw));
+          ctx.stroke();
+        });
+      }
+
+      // Accent bars for corporate_dark / tech styles
+      if (['corporate_dark', 'tech'].includes(selectedTemplate.style)) {
+        const barW = W * 0.15;
+        ctx.fillStyle = selectedTemplate.accentColor;
+        ctx.fillRect(0, 0, barW, 5 * scale);
+        ctx.fillRect(W - barW, 0, barW, 5 * scale);
+        ctx.fillRect(0, H - 5 * scale, barW, 5 * scale);
+        ctx.fillRect(W - barW, H - 5 * scale, barW, 5 * scale);
+      }
+
       ctx.textAlign = 'center';
-      
-      // Subtitle
+
+      // Header subtitle
+      const headerText = eventType === 'wedding' ? 'SHARE YOUR MEMORIES' : eventType === 'birthday' ? 'CAPTURE THE FUN!' : 'EVENT PHOTOS';
       ctx.fillStyle = selectedTemplate.accentColor;
-      ctx.font = `${28 * scale}px Arial`;
-      const subtitleText = eventType === 'wedding' ? 'SHARE YOUR MEMORIES' : eventType === 'birthday' ? 'CAPTURE THE FUN!' : 'EVENT PHOTOS';
-      ctx.fillText(subtitleText, canvas.width / 2, 80 * scale);
-      
+      ctx.font = `600 ${28 * scale}px Arial, sans-serif`;
+      ctx.letterSpacing = `${4 * scale}px`;
+      ctx.fillText(headerText, W / 2, H * 0.09);
+
       // Title
       ctx.fillStyle = selectedTemplate.textColor;
-      ctx.font = `bold ${52 * scale}px Georgia`;
-      ctx.fillText(eventTitle || 'Event Name', canvas.width / 2, 140 * scale);
-      
+      ctx.font = `bold ${48 * scale}px Georgia, serif`;
+      const title = eventTitle || 'Event Name';
+      // Measure and potentially shrink title
+      let titleFontSize = 48 * scale;
+      ctx.font = `bold ${titleFontSize}px Georgia, serif`;
+      while (ctx.measureText(title).width > W * 0.85 && titleFontSize > 20 * scale) {
+        titleFontSize -= 2 * scale;
+        ctx.font = `bold ${titleFontSize}px Georgia, serif`;
+      }
+      ctx.fillText(title, W / 2, H * 0.155);
+
       // Event subtitle
       if (eventSubtitle) {
         ctx.fillStyle = selectedTemplate.accentColor;
-        ctx.font = `${28 * scale}px Arial`;
-        ctx.fillText(eventSubtitle, canvas.width / 2, 185 * scale);
+        ctx.font = `500 ${28 * scale}px Arial, sans-serif`;
+        ctx.fillText(eventSubtitle, W / 2, H * 0.21);
       }
-      
-      // Bottom text
+
+      // Generate QR code locally (no external API)
+      const qrDataUrl = await QRCode.toDataURL(guestUrl || 'https://example.com', {
+        width: 400,
+        errorCorrectionLevel: 'H',
+        margin: 1,
+        color: { dark: '#000000', light: '#FFFFFF' }
+      });
+
+      const qrImg = new Image();
+      await new Promise((resolve, reject) => {
+        qrImg.onload = resolve;
+        qrImg.onerror = reject;
+        qrImg.src = qrDataUrl;
+      });
+
+      // QR code centered
+      const qrSize = Math.min(W, H) * 0.40;
+      const qrX = (W - qrSize) / 2;
+      const qrY = (H - qrSize) / 2;
+
+      // QR background + border
+      const pad = 18 * scale;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.strokeStyle = selectedTemplate.borderColor;
+      ctx.lineWidth = 4 * scale;
+
+      // Rounded rect for QR background
+      const rx = qrX - pad, ry = qrY - pad, rw = qrSize + pad * 2, rh = qrSize + pad * 2, r = 12 * scale;
+      ctx.beginPath();
+      ctx.moveTo(rx + r, ry); ctx.lineTo(rx + rw - r, ry); ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r);
+      ctx.lineTo(rx + rw, ry + rh - r); ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - r, ry + rh);
+      ctx.lineTo(rx + r, ry + rh); ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - r);
+      ctx.lineTo(rx, ry + r); ctx.quadraticCurveTo(rx, ry, rx + r, ry);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
+      // Footer
       ctx.fillStyle = selectedTemplate.textColor;
-      ctx.font = `bold ${36 * scale}px Arial`;
-      ctx.fillText('Scan to Upload', canvas.width / 2, canvas.height - 100 * scale);
-      
+      ctx.font = `bold ${36 * scale}px Arial, sans-serif`;
+      ctx.fillText('Scan to Upload', W / 2, H * 0.84);
+
       ctx.fillStyle = selectedTemplate.accentColor;
-      ctx.font = `${26 * scale}px Arial`;
-      ctx.fillText('Photos & Videos', canvas.width / 2, canvas.height - 65 * scale);
-      
-      ctx.font = `${24 * scale}px Arial`;
-      ctx.fillText('♥ SnapVault', canvas.width / 2, canvas.height - 30 * scale);
-      
-      // Download
+      ctx.font = `500 ${26 * scale}px Arial, sans-serif`;
+      ctx.fillText('Photos & Videos', W / 2, H * 0.895);
+
+      ctx.font = `600 ${22 * scale}px Arial, sans-serif`;
+      ctx.fillText('SnapVault', W / 2, H * 0.945);
+
+      // Trigger download
       const link = document.createElement('a');
       link.download = `${eventTitle?.replace(/[^a-z0-9]/gi, '_') || 'QR_Card'}_${selectedSize}.png`;
       link.href = canvas.toDataURL('image/png', 1.0);
+      document.body.appendChild(link);
       link.click();
-      
+      document.body.removeChild(link);
+
     } catch (error) {
       console.error('Download error:', error);
       alert('Failed to download. Please try the Print option instead.');
