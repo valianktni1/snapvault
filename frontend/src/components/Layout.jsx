@@ -126,6 +126,11 @@ export default function Layout({ children, title }) {
 
         <main className="flex-1 overflow-auto p-5 md:p-6">
           {children}
+          <div className="text-center py-6 mt-8 border-t border-slate-100">
+            <p className="text-xs text-slate-400" data-testid="footer-credit">
+              SnapVault designed and hosted by Weddings By Mark
+            </p>
+          </div>
         </main>
       </div>
     </div>
