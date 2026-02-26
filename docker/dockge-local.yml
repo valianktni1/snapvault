@@ -1,0 +1,101 @@
+# =====================================================
+# SNAPVAULT - LOCAL TESTING VERSION
+# =====================================================
+# Use this for LOCAL ACCESS ONLY (before domain setup)
+# GitHub: https://github.com/valianktni1/snapvault
+# =====================================================
+
+version: "3.8"
+
+services:
+  # Database
+  snapvault-db:
+    image: mongo:7.0
+    container_name: snapvault-db
+    restart: unless-stopped
+    volumes:
+      - /mnt/apps/snapvaultapp/mongodb:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - snapvault
+
+  # Backend API
+  snapvault-api:
+    build:
+      context: https://github.com/valianktni1/snapvault.git#main
+      dockerfile: docker/Dockerfile.backend
+    container_name: snapvault-api
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      MONGO_URL: mongodb://snapvault-db:27017
+      DB_NAME: snapvault
+      JWT_SECRET_KEY: local-dev-secret-change-for-production-use
+      ADMIN_EMAIL: admin@snapvault.uk
+      # ⚠️ Replace 192.168.1.XXX with YOUR TrueNAS IP
+      CORS_ORIGINS: "http://localhost:3000,http://localhost,http://192.168.1.XXX:3000,http://192.168.1.XXX"
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - /mnt/temp-tntermediate/snapvaultusers:/app/uploads
+    depends_on:
+      snapvault-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    networks:
+      - snapvault
+
+  # Frontend (configured for LOCAL access)
+  snapvault-web:
+    build:
+      context: https://github.com/valianktni1/snapvault.git#main
+      dockerfile: docker/Dockerfile.frontend
+      args:
+        # ⚠️ Replace 192.168.1.XXX with YOUR TrueNAS IP
+        REACT_APP_BACKEND_URL: http://192.168.1.XXX:8001
+    container_name: snapvault-web
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      snapvault-api:
+        condition: service_healthy
+    networks:
+      - snapvault
+
+networks:
+  snapvault:
+    name: snapvault
+    driver: bridge
+
+# =====================================================
+# 📋 QUICK START
+# =====================================================
+#
+# 1. Find your TrueNAS IP (e.g., 192.168.1.50)
+#
+# 2. Replace ALL instances of 192.168.1.XXX with your IP
+#
+# 3. Create directories:
+#    mkdir -p /mnt/apps/snapvaultapp/mongodb
+#    mkdir -p /mnt/temp-tntermediate/snapvaultusers
+#    chmod 777 /mnt/apps/snapvaultapp/mongodb
+#    chmod 777 /mnt/temp-tntermediate/snapvaultusers
+#
+# 4. Deploy in Dockge
+#
+# 5. Access at: http://YOUR_IP:3000
+#
+# 6. Register with admin@snapvault.uk to get admin rights
+#
+# =====================================================
