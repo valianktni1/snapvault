@@ -800,15 +800,16 @@ async def test_smtp_settings(current_user=Depends(get_admin_user)):
         raise HTTPException(400, f"SMTP test failed: {str(e)}")
 
 
-# --- Payment Confirmation Route ---
-class PaymentConfirm(BaseModel):
+# --- Payment Routes ---
+class PaymentSubmit(BaseModel):
     qr_template: str
     qr_size: str = "10x8"
     guest_url: str
 
 
-@api_router.post("/events/{event_id}/confirm-payment")
-async def confirm_payment(event_id: str, data: PaymentConfirm, current_user=Depends(get_current_user)):
+@api_router.post("/events/{event_id}/submit-payment")
+async def submit_payment(event_id: str, data: PaymentSubmit, current_user=Depends(get_current_user)):
+    """Organiser submits that they have sent PayPal payment. Sets status to awaiting_approval."""
     event = await db.events.find_one({
         "_id": ObjectId(event_id),
         "organizer_id": str(current_user["_id"])
@@ -817,39 +818,76 @@ async def confirm_payment(event_id: str, data: PaymentConfirm, current_user=Depe
         raise HTTPException(404, "Event not found")
 
     if event.get("is_paid"):
-        raise HTTPException(400, "Payment already confirmed for this event")
+        raise HTTPException(400, "This event is already approved and paid")
 
     await db.events.update_one(
         {"_id": ObjectId(event_id)},
         {"$set": {
-            "is_paid": True,
+            "payment_status": "awaiting_approval",
             "qr_template": data.qr_template,
             "qr_size": data.qr_size,
-            "paid_at": datetime.now(timezone.utc).isoformat()
+            "guest_url": data.guest_url,
+            "submitted_at": datetime.now(timezone.utc).isoformat()
         }}
     )
 
-    # Generate QR card image
+    return {
+        "message": "Payment submitted — awaiting admin approval",
+        "payment_status": "awaiting_approval"
+    }
+
+
+@api_router.post("/admin/events/{event_id}/approve-payment")
+async def approve_payment(event_id: str, current_user=Depends(get_admin_user)):
+    """Admin approves payment. Generates QR card and emails it to the organiser."""
+    event = await db.events.find_one({"_id": ObjectId(event_id)})
+    if not event:
+        raise HTTPException(404, "Event not found")
+
+    if event.get("is_paid"):
+        raise HTTPException(400, "Already approved")
+
+    organizer = await db.users.find_one({"_id": ObjectId(event["organizer_id"])})
+    if not organizer:
+        raise HTTPException(404, "Organiser not found")
+
+    # Mark as paid
+    await db.events.update_one(
+        {"_id": ObjectId(event_id)},
+        {"$set": {
+            "is_paid": True,
+            "payment_status": "approved",
+            "paid_at": datetime.now(timezone.utc).isoformat(),
+            "approved_by": str(current_user["_id"])
+        }}
+    )
+
+    # Generate QR card and send email
     email_sent = False
-    try:
-        qr_image = generate_qr_card_image(
-            event_type=event["event_type"],
-            template_key=data.qr_template,
-            size_key=data.qr_size,
-            event_title=event["title"],
-            event_subtitle=event.get("subtitle", ""),
-            guest_url=data.guest_url
-        )
-        email_sent = await send_qr_email(
-            to_email=current_user["email"],
-            event_title=event["title"],
-            qr_image_bytes=qr_image
-        )
-    except Exception as e:
-        logger.error(f"QR card generation/email failed: {e}")
+    guest_url = event.get("guest_url", "")
+    qr_template = event.get("qr_template", "")
+    qr_size = event.get("qr_size", "10x8")
+
+    if guest_url and qr_template:
+        try:
+            qr_image = generate_qr_card_image(
+                event_type=event["event_type"],
+                template_key=qr_template,
+                size_key=qr_size,
+                event_title=event["title"],
+                event_subtitle=event.get("subtitle", ""),
+                guest_url=guest_url
+            )
+            email_sent = await send_qr_email(
+                to_email=organizer["email"],
+                event_title=event["title"],
+                qr_image_bytes=qr_image
+            )
+        except Exception as e:
+            logger.error(f"QR card generation/email failed for event {event_id}: {e}")
 
     return {
-        "message": "Payment confirmed",
+        "message": "Payment approved — QR card sent to organiser" if email_sent else "Payment approved — email could not be sent (check SMTP settings)",
         "is_paid": True,
         "email_sent": email_sent
     }
