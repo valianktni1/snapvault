@@ -35,6 +35,7 @@ export default function AdminDashboard() {
   const [downloading, setDownloading] = useState(null);
   const [deletingEvent, setDeletingEvent] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
+  const [approvingEvent, setApprovingEvent] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
