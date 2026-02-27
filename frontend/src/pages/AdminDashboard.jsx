@@ -202,8 +202,8 @@ export default function AdminDashboard() {
                     <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Event</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Organizer</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden sm:table-cell">Type</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Files</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Created</th>
                     <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
                   </tr>
                 </thead>
@@ -211,8 +211,9 @@ export default function AdminDashboard() {
                   {events.map(event => {
                     const template = getTemplate(event.event_type, event.template);
                     const Icon = EVENT_ICONS[event.event_type] || Heart;
+                    const ps = event.payment_status || 'unpaid';
                     return (
-                      <tr key={event.id} data-testid={`admin-event-row-${event.id}`} className="hover:bg-slate-50 transition-colors">
+                      <tr key={event.id} data-testid={`admin-event-row-${event.id}`} className={`hover:bg-slate-50 transition-colors ${ps === 'awaiting_approval' ? 'bg-amber-50/40' : ''}`}>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-1.5 h-10 rounded-full flex-shrink-0" style={{ backgroundColor: template.accent }} />
@@ -233,14 +234,34 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td className="px-5 py-4">
+                          {event.is_paid ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full">
+                              <CheckCircle2 className="w-3 h-3" /> Paid
+                            </span>
+                          ) : ps === 'awaiting_approval' ? (
+                            <button
+                              data-testid={`admin-approve-${event.id}`}
+                              onClick={() => handleApprovePayment(event.id, event.title)}
+                              disabled={approvingEvent === event.id}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50 border border-amber-300 animate-pulse hover:animate-none"
+                            >
+                              {approvingEvent === event.id ? (
+                                <div className="w-3 h-3 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <CreditCard className="w-3 h-3" />
+                              )}
+                              Approve & Send QR
+                            </button>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded-full">
+                              Unpaid
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-5 py-4">
                           <span className={`text-sm font-bold ${event.media_count === 0 ? 'text-slate-300' : 'text-slate-900'}`}>
                             {event.media_count}
                           </span>
-                        </td>
-                        <td className="px-5 py-4 hidden lg:table-cell text-xs text-slate-400">
-                          {new Date(event.created_at).toLocaleDateString('en-GB', {
-                            day: 'numeric', month: 'short', year: 'numeric'
-                          })}
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center justify-end gap-1">
