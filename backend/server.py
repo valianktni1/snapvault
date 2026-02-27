@@ -459,6 +459,111 @@ async def change_password(data: ChangePassword, current_user=Depends(get_current
     return {"message": "Password changed successfully"}
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest):
+    """Send a password reset email with a time-limited token."""
+    email = data.email.lower()
+    user = await db.users.find_one({"email": email})
+
+    # Always return success to avoid revealing if email exists
+    if not user:
+        return {"message": "If an account exists, a reset link has been sent"}
+
+    # Generate a reset token (expires in 1 hour)
+    reset_token = jwt.encode(
+        {"sub": str(user["_id"]), "type": "reset", "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
+        JWT_SECRET, algorithm="HS256"
+    )
+
+    # Send reset email
+    settings = await db.settings.find_one({"type": "smtp"})
+    if not settings or not settings.get("smtp_password"):
+        logger.warning("SMTP not configured — cannot send reset email")
+        raise HTTPException(503, "Email service is not configured. Please contact the administrator.")
+
+    try:
+        # Build reset URL using the Referer header or fallback
+        site_url = os.environ.get("SITE_URL", "")
+        reset_url = f"{site_url}/reset-password?token={reset_token}"
+
+        msg_obj = MIMEMultipart()
+        msg_obj["From"] = settings["smtp_user"]
+        msg_obj["To"] = email
+        msg_obj["Subject"] = "SnapVault — Password Reset"
+
+        html = f"""<html><body style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:30px;color:#2C1810;background:#FDFAF6;">
+<h2 style="color:#1a1a2e;">Password Reset</h2>
+<p style="font-size:16px;line-height:1.6;">
+Hi {user.get('name', '')},
+</p>
+<p style="font-size:16px;line-height:1.6;">
+We received a request to reset your password. Click the link below to set a new one:
+</p>
+<p style="margin:25px 0;">
+<a href="{reset_url}" style="display:inline-block;background:#4F46E5;color:#FFFFFF;text-decoration:none;padding:14px 28px;border-radius:12px;font-weight:bold;font-size:15px;">Reset My Password</a>
+</p>
+<p style="font-size:14px;color:#888;line-height:1.5;">
+This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.
+</p>
+<hr style="border:none;border-top:1px solid #E5DDD0;margin:25px 0 15px 0;"/>
+<p style="font-size:12px;color:#999;text-align:center;">SnapVault — Designed and hosted by Weddings By Mark</p>
+</body></html>"""
+        msg_obj.attach(MIMEText(html, "html"))
+
+        port = int(settings["smtp_port"])
+        if port == 465:
+            with smtplib.SMTP_SSL(settings["smtp_host"], port, timeout=30) as server:
+                server.login(settings["smtp_user"], settings["smtp_password"])
+                server.sendmail(settings["smtp_user"], email, msg_obj.as_string())
+        else:
+            with smtplib.SMTP(settings["smtp_host"], port, timeout=30) as server:
+                server.starttls()
+                server.login(settings["smtp_user"], settings["smtp_password"])
+                server.sendmail(settings["smtp_user"], email, msg_obj.as_string())
+
+        logger.info(f"Password reset email sent to {email}")
+    except Exception as e:
+        logger.error(f"Failed to send reset email: {e}")
+        raise HTTPException(503, "Failed to send reset email. Please try again later.")
+
+    return {"message": "If an account exists, a reset link has been sent"}
+
+
+@api_router.post("/auth/reset-password")
+async def reset_password(data: ResetPasswordRequest):
+    """Reset password using a valid token."""
+    try:
+        payload = jwt.decode(data.token, JWT_SECRET, algorithms=["HS256"])
+        if payload.get("type") != "reset":
+            raise HTTPException(400, "Invalid reset token")
+        user_id = payload["sub"]
+    except JWTError:
+        raise HTTPException(400, "Reset link is invalid or has expired. Please request a new one.")
+
+    if len(data.new_password) < 6:
+        raise HTTPException(400, "Password must be at least 6 characters")
+
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(400, "Invalid reset token")
+
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"hashed_password": pwd_context.hash(data.new_password)}}
+    )
+
+    return {"message": "Password reset successfully"}
+
+
 # --- Event Routes ---
 @api_router.get("/events")
 async def get_events(current_user=Depends(get_current_user)):
