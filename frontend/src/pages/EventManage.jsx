@@ -176,14 +176,26 @@ function PaymentGate({ event, guestUrl, onPaymentConfirmed }) {
         {/* Step 3: Confirm */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className={`w-6 h-6 text-white rounded-full flex items-center justify-center text-xs font-bold ${paypalClicked ? 'bg-indigo-600' : 'bg-slate-300'}`}>3</span>
-            <h4 className={`font-semibold ${paypalClicked ? 'text-slate-900' : 'text-slate-400'}`}>Confirm your payment</h4>
+            <span className={`w-6 h-6 text-white rounded-full flex items-center justify-center text-xs font-bold ${timerDone ? 'bg-indigo-600' : 'bg-slate-300'}`}>3</span>
+            <h4 className={`font-semibold ${timerDone ? 'text-slate-900' : 'text-slate-400'}`}>Confirm your payment</h4>
           </div>
 
-          {paypalClicked ? (
+          {paypalClicked && !timerDone ? (
+            <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full border-4 border-amber-400 flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg font-bold text-amber-700">{countdown}</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-amber-900">Waiting for payment to complete...</p>
+                  <p className="text-xs text-amber-700 mt-0.5">The confirm button will unlock in {countdown} seconds. Please complete your PayPal payment.</p>
+                </div>
+              </div>
+            </div>
+          ) : timerDone ? (
             <>
               <p className="text-sm text-slate-600 mb-3">
-                Once you've completed your PayPal payment, click the button below to unlock your QR card.
+                If you have completed your PayPal payment, click below to unlock your QR card.
               </p>
 
               {error && (
@@ -211,6 +223,7 @@ function PaymentGate({ event, guestUrl, onPaymentConfirmed }) {
                   </>
                 )}
               </button>
+              <p className="text-xs text-slate-400 mt-2">By confirming, you declare that payment of £40 has been made. Unpaid events will be deactivated.</p>
             </>
           ) : (
             <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
