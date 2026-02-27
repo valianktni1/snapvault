@@ -87,12 +87,10 @@ export default function Auth({ defaultTab = 'login' }) {
             <p className="text-indigo-200 text-xs mt-0.5">Private media collection platform</p>
           </div>
         </div>
-        <div className="relative z-10 space-y-8">
-          <p className="text-white/90 text-3xl font-light leading-relaxed">
+        <div className="relative z-10">
+          <p className="text-white/90 text-3xl font-light leading-relaxed mb-8">
             "Every great event deserves to be remembered perfectly."
           </p>
-          {/* Auto-scrolling reviews */}
-          <ReviewCarousel />
           <div className="flex gap-3">
             {[
               { label: 'Weddings', color: 'bg-rose-400/30' },
