@@ -1,10 +1,94 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Mail } from 'lucide-react';
+import api from '../utils/api';
+
+function ForgotPassword({ onBack }) {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/auth/forgot-password', { email });
+      setSent(true);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (sent) {
+    return (
+      <div className="text-center py-4">
+        <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Mail className="w-7 h-7 text-emerald-600" />
+        </div>
+        <h3 className="font-bold text-slate-900 text-lg mb-2">Check Your Email</h3>
+        <p className="text-sm text-slate-600 mb-6">
+          If an account exists for <strong>{email}</strong>, we've sent a password reset link. Please check your inbox.
+        </p>
+        <button
+          onClick={onBack}
+          data-testid="back-to-login-btn"
+          className="text-indigo-600 text-sm font-semibold hover:text-indigo-700 transition-colors"
+        >
+          Back to Sign In
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1 text-slate-400 hover:text-slate-700 text-sm mb-4 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to Sign In
+      </button>
+      <h3 className="font-bold text-slate-900 text-lg mb-1">Forgot your password?</h3>
+      <p className="text-sm text-slate-500 mb-5">Enter your email and we'll send you a link to reset it.</p>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Email Address</label>
+          <input
+            data-testid="forgot-email-input"
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+          />
+        </div>
+        <button
+          data-testid="send-reset-link-btn"
+          type="submit"
+          disabled={loading}
+          className="w-full bg-indigo-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-indigo-700 active:scale-[0.98] disabled:opacity-60 transition-all"
+        >
+          {loading ? 'Sending...' : 'Send Reset Link'}
+        </button>
+      </form>
+    </div>
+  );
+}
 
 export default function Auth({ defaultTab = 'login' }) {
   const [tab, setTab] = useState(defaultTab);
+  const [showForgot, setShowForgot] = useState(false);
   const [form, setForm] = useState({ email: '', password: '', name: '' });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
