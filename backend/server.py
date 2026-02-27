@@ -151,6 +151,7 @@ def fmt_event(event: dict, media_count: int = 0) -> dict:
         "organizer_id": event["organizer_id"],
         "media_count": media_count,
         "is_paid": event.get("is_paid", False),
+        "payment_status": event.get("payment_status", "unpaid"),
         "qr_template": event.get("qr_template", ""),
         "qr_size": event.get("qr_size", "10x8"),
         "created_at": event["created_at"]
