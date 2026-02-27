@@ -28,10 +28,10 @@ Build a web application called "GuestPix/SnapVault" for events (weddings, birthd
 - [x] Bulk media download as ZIP
 - [x] Guest upload page (public, no auth required)
 - [x] Docker deployment for TrueNAS
-- [x] **Payment Gate** - £40 PayPal.me integration with trust-based confirmation
-- [x] **SMTP Settings** - Admin panel for email config (pre-filled Hostinger defaults)
-- [x] **QR Card Email** - Generated QR card image sent via email after payment
-- [x] **Payment Flow** - Template selection → PayPal → Confirm → QR unlocked + emailed
+- [x] **Payment Flow (Admin-Approved)** - Organiser submits payment, Admin verifies and approves, QR card auto-emailed
+- [x] **SMTP Settings** - Admin panel Settings tab, pre-filled Hostinger defaults
+- [x] **QR Card Email** - Generated server-side in chosen template, QR centered, PNG attachment
+- [x] **Admin Payment Column** - Events table shows Paid/Unpaid/Approve button
 - [x] **New Logo** - SnapVault padlock/swirl branding logo
 - [x] **QR Card Download Fix** - Local QR generation (no external API/CORS issues)
 - [x] **Footer Branding** - "SnapVault designed and hosted by Weddings By Mark" on every page
