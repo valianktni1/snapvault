@@ -184,10 +184,10 @@ def fmt_user_response(user: dict) -> dict:
 # --- QR Card Templates (mirrors frontend PrintableQRCards.jsx) ---
 QR_CARD_TEMPLATES = {
     "wedding": {
-        "vintage_rose": {"bgColor": "#F5EDDF", "borderColor": "#C5A55A", "textColor": "#2C1810", "accentColor": "#8B7355", "bgImage": "wedding_vintage_rose.png"},
-        "blush_peony": {"bgColor": "#FFF0F3", "borderColor": "#D4869C", "textColor": "#4A2030", "accentColor": "#C77D91", "bgImage": "wedding_blush_peony.png"},
-        "eucalyptus": {"bgColor": "#F0F5F0", "borderColor": "#7D9B76", "textColor": "#2D3B2D", "accentColor": "#6B8E5A", "bgImage": "wedding_eucalyptus.png"},
-        "classic_gold": {"bgColor": "#FAF6EE", "borderColor": "#C5A55A", "textColor": "#2C2418", "accentColor": "#A8903C", "bgImage": "wedding_classic_gold.png"},
+        "elegant_frame": {"bgColor": "#FDF8F3", "borderColor": "#D4AF37", "textColor": "#2C1810", "accentColor": "#D4AF37"},
+        "romantic_floral": {"bgColor": "#FFF5F7", "borderColor": "#E8B4BC", "textColor": "#6B2D3D", "accentColor": "#D4869C"},
+        "modern_minimal": {"bgColor": "#FFFFFF", "borderColor": "#1A1A1A", "textColor": "#1A1A1A", "accentColor": "#666666"},
+        "rustic_kraft": {"bgColor": "#F5E6D3", "borderColor": "#8B7355", "textColor": "#4A3728", "accentColor": "#6B8E23"},
     },
     "birthday": {
         "confetti_party": {"bgColor": "#FFF9E6", "borderColor": "#FF6B9D", "textColor": "#333333", "accentColor": "#FF6B9D"},
@@ -229,20 +229,12 @@ def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
     text_rgb = hex_to_rgb(tmpl["textColor"])
     accent_rgb = hex_to_rgb(tmpl["accentColor"])
 
-    # Check for background image
-    bg_image_name = tmpl.get("bgImage")
-    templates_dir = Path(__file__).parent / "templates"
-
-    if bg_image_name and (templates_dir / bg_image_name).exists():
-        img = Image.open(templates_dir / bg_image_name).convert("RGB")
-        img = img.resize((width, height), Image.LANCZOS)
-    else:
-        img = Image.new("RGB", (width, height), bg_rgb)
-        draw_temp = ImageDraw.Draw(img)
-        bw = 6
-        draw_temp.rectangle([bw // 2, bw // 2, width - bw // 2, height - bw // 2], outline=border_rgb, width=bw)
-
+    img = Image.new("RGB", (width, height), bg_rgb)
     draw = ImageDraw.Draw(img)
+
+    # Draw border
+    bw = 6
+    draw.rectangle([bw // 2, bw // 2, width - bw // 2, height - bw // 2], outline=border_rgb, width=bw)
 
     # Load fonts
     try:
@@ -254,38 +246,31 @@ def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
         sans_reg = ImageFont.load_default()
         sans_bold = ImageFont.load_default()
 
-    has_bg = bg_image_name is not None
-
-    # Helper: draw text with optional backing for readability on images
-    def draw_text_with_backing(x, y, text, font, fill, anchor="mm"):
-        bbox = draw.textbbox((0, 0), text, font=font)
-        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        if has_bg:
-            px, py = 8, 4
-            draw.rectangle([x - tw // 2 - px, y - th // 2 - py, x + tw // 2 + px, y + th // 2 + py],
-                           fill=(255, 255, 255, 190) if img.mode == 'RGBA' else (255, 255, 255))
-        draw.text((x - tw // 2, y - th // 2), text, fill=fill, font=font)
-
-    # Header subtitle
+    # Header subtitle text
     header_map = {"wedding": "SHARE YOUR MEMORIES", "birthday": "CAPTURE THE FUN!", "corporate": "EVENT PHOTOS"}
     header_text = header_map.get(event_type, "EVENT PHOTOS")
-    draw_text_with_backing(width // 2, int(height * 0.07), header_text, sans_reg, text_rgb)
+    hbox = draw.textbbox((0, 0), header_text, font=sans_reg)
+    draw.text(((width - (hbox[2] - hbox[0])) // 2, int(height * 0.07)), header_text, fill=accent_rgb, font=sans_reg)
 
-    # Title
-    display_title = event_title
-    tbox = draw.textbbox((0, 0), display_title, font=serif_bold)
+    # Event title
+    tbox = draw.textbbox((0, 0), event_title, font=serif_bold)
     title_w = tbox[2] - tbox[0]
+    # If title is too wide, truncate
+    display_title = event_title
     if title_w > width * 0.85:
         while title_w > width * 0.85 and len(display_title) > 10:
             display_title = display_title[:-1]
             tbox = draw.textbbox((0, 0), display_title + "...", font=serif_bold)
             title_w = tbox[2] - tbox[0]
         display_title += "..."
-    draw_text_with_backing(width // 2, int(height * 0.14), display_title, serif_bold, text_rgb)
+        tbox = draw.textbbox((0, 0), display_title, font=serif_bold)
+        title_w = tbox[2] - tbox[0]
+    draw.text(((width - title_w) // 2, int(height * 0.13)), display_title, fill=text_rgb, font=serif_bold)
 
     # Event subtitle
     if event_subtitle:
-        draw_text_with_backing(width // 2, int(height * 0.21), event_subtitle, sans_reg, accent_rgb)
+        sbox = draw.textbbox((0, 0), event_subtitle, font=sans_reg)
+        draw.text(((width - (sbox[2] - sbox[0])) // 2, int(height * 0.21)), event_subtitle, fill=accent_rgb, font=sans_reg)
 
     # Generate QR code image
     qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=2)
@@ -309,13 +294,17 @@ def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
     img.paste(qr_img, (qr_x, qr_y))
 
     # Footer
-    draw_text_with_backing(width // 2, int(height * 0.84), "Scan to Upload", sans_bold, text_rgb)
-    draw_text_with_backing(width // 2, int(height * 0.89), "Photos & Videos", sans_reg, accent_rgb)
+    ft = "Scan to Upload"
+    fbox = draw.textbbox((0, 0), ft, font=sans_bold)
+    draw.text(((width - (fbox[2] - fbox[0])) // 2, int(height * 0.83)), ft, fill=text_rgb, font=sans_bold)
 
-    # Brand
-    bbox = draw.textbbox((0, 0), "SnapVault", font=sans_reg)
-    bw_text = bbox[2] - bbox[0]
-    draw.text(((width - bw_text) // 2, int(height * 0.94)), "SnapVault", fill=accent_rgb, font=sans_reg)
+    pt = "Photos & Videos"
+    pbox = draw.textbbox((0, 0), pt, font=sans_reg)
+    draw.text(((width - (pbox[2] - pbox[0])) // 2, int(height * 0.89)), pt, fill=accent_rgb, font=sans_reg)
+
+    bt = "SnapVault"
+    bbox = draw.textbbox((0, 0), bt, font=sans_reg)
+    draw.text(((width - (bbox[2] - bbox[0])) // 2, int(height * 0.94)), bt, fill=accent_rgb, font=sans_reg)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")

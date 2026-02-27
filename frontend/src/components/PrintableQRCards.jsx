@@ -13,52 +13,48 @@ const SIZE_OPTIONS = [
 const QR_CARD_TEMPLATES = {
   wedding: [
     {
-      key: 'vintage_rose',
-      name: 'Vintage Rose',
-      description: 'Parchment with white roses & gold frame',
-      bgColor: '#F5EDDF',
-      borderColor: '#C5A55A',
+      key: 'elegant_frame',
+      name: 'Elegant Frame',
+      description: 'Classic gold border with script text',
+      bgColor: '#FDF8F3',
+      borderColor: '#D4AF37',
       textColor: '#2C1810',
-      accentColor: '#8B7355',
+      accentColor: '#D4AF37',
       headerFont: "'Playfair Display', serif",
-      style: 'image',
-      bgImage: '/templates/wedding_vintage_rose.png'
+      style: 'elegant'
     },
     {
-      key: 'blush_peony',
-      name: 'Blush Peony',
-      description: 'Soft pink peonies & rose gold frame',
-      bgColor: '#FFF0F3',
-      borderColor: '#D4869C',
-      textColor: '#4A2030',
-      accentColor: '#C77D91',
+      key: 'romantic_floral',
+      name: 'Romantic Floral',
+      description: 'Soft pink with floral corners',
+      bgColor: '#FFF5F7',
+      borderColor: '#E8B4BC',
+      textColor: '#6B2D3D',
+      accentColor: '#D4869C',
       headerFont: "'Playfair Display', serif",
-      style: 'image',
-      bgImage: '/templates/wedding_blush_peony.png'
+      style: 'floral'
     },
     {
-      key: 'eucalyptus',
-      name: 'Eucalyptus Garden',
-      description: 'Fresh greenery with gold accents',
-      bgColor: '#F0F5F0',
-      borderColor: '#7D9B76',
-      textColor: '#2D3B2D',
-      accentColor: '#6B8E5A',
+      key: 'modern_minimal',
+      name: 'Modern Minimal',
+      description: 'Clean lines, sophisticated feel',
+      bgColor: '#FFFFFF',
+      borderColor: '#1A1A1A',
+      textColor: '#1A1A1A',
+      accentColor: '#666666',
       headerFont: "'Playfair Display', serif",
-      style: 'image',
-      bgImage: '/templates/wedding_eucalyptus.png'
+      style: 'minimal'
     },
     {
-      key: 'classic_gold',
-      name: 'Classic Gold',
-      description: 'Luxury ivory with gold flourishes',
-      bgColor: '#FAF6EE',
-      borderColor: '#C5A55A',
-      textColor: '#2C2418',
-      accentColor: '#A8903C',
+      key: 'rustic_kraft',
+      name: 'Rustic Charm',
+      description: 'Warm kraft paper aesthetic',
+      bgColor: '#F5E6D3',
+      borderColor: '#8B7355',
+      textColor: '#4A3728',
+      accentColor: '#6B8E23',
       headerFont: "'Playfair Display', serif",
-      style: 'image',
-      bgImage: '/templates/wedding_classic_gold.png'
+      style: 'rustic'
     }
   ],
   birthday: [
@@ -217,35 +213,24 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
 
   return (
     <div
-      className="relative flex flex-col items-center justify-between rounded-lg shadow-lg print:shadow-none overflow-hidden"
+      className="relative flex flex-col items-center justify-between rounded-lg shadow-lg print:shadow-none"
       style={{
         backgroundColor: template.bgColor,
-        border: template.bgImage ? 'none' : `4px solid ${template.borderColor}`,
+        border: `4px solid ${template.borderColor}`,
         width: width,
         height: height,
-        padding: template.bgImage ? 0 : width * 0.05
+        padding: width * 0.05
       }}
     >
-      {/* Background image for image-based templates */}
-      {template.bgImage && (
-        <img
-          src={template.bgImage}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ zIndex: 0 }}
-        />
-      )}
-
-      {!template.bgImage && getDecorations()}
+      {getDecorations()}
       
       {/* Header */}
-      <div className="text-center z-10" style={{ marginTop: template.bgImage ? height * 0.06 : height * 0.02 }}>
+      <div className="text-center z-10" style={{ marginTop: height * 0.02 }}>
         <p
           className="uppercase tracking-widest"
           style={{ 
-            color: template.textColor,
-            fontSize: width * 0.028,
-            textShadow: template.bgImage ? '0 1px 3px rgba(255,255,255,0.7)' : 'none'
+            color: template.accentColor,
+            fontSize: width * 0.028
           }}
         >
           {eventType === 'wedding' ? 'Share Your Memories' :
@@ -258,8 +243,7 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
             color: template.textColor, 
             fontFamily: template.headerFont,
             fontSize: width * 0.055,
-            marginTop: height * 0.01,
-            textShadow: template.bgImage ? '0 1px 4px rgba(255,255,255,0.8)' : 'none'
+            marginTop: height * 0.01
           }}
         >
           {eventTitle || 'Event Name'}
@@ -268,8 +252,7 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
           <p style={{ 
             color: template.accentColor,
             fontSize: width * 0.028,
-            marginTop: height * 0.01,
-            textShadow: template.bgImage ? '0 1px 3px rgba(255,255,255,0.7)' : 'none'
+            marginTop: height * 0.01
           }}>
             {eventSubtitle}
           </p>
@@ -283,8 +266,7 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
           style={{ 
             backgroundColor: '#FFFFFF', 
             border: `3px solid ${template.borderColor}`,
-            padding: qrSize * 0.1,
-            boxShadow: template.bgImage ? '0 4px 20px rgba(0,0,0,0.15)' : 'none'
+            padding: qrSize * 0.1
           }}
         >
           <QRCodeSVG
@@ -297,13 +279,12 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
       </div>
 
       {/* Footer */}
-      <div className="text-center z-10" style={{ marginBottom: template.bgImage ? height * 0.04 : height * 0.02 }}>
+      <div className="text-center z-10" style={{ marginBottom: height * 0.02 }}>
         <p
           className="font-medium"
           style={{ 
             color: template.textColor,
-            fontSize: width * 0.035,
-            textShadow: template.bgImage ? '0 1px 3px rgba(255,255,255,0.7)' : 'none'
+            fontSize: width * 0.035
           }}
         >
           Scan to Upload
@@ -311,8 +292,7 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
         <p
           style={{ 
             color: template.accentColor,
-            fontSize: width * 0.025,
-            textShadow: template.bgImage ? '0 1px 3px rgba(255,255,255,0.7)' : 'none'
+            fontSize: width * 0.025
           }}
         >
           Photos & Videos
@@ -321,11 +301,7 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
           {eventType === 'wedding' && <Heart style={{ color: template.accentColor, width: width * 0.035, height: width * 0.035 }} />}
           {eventType === 'birthday' && <Cake style={{ color: template.accentColor, width: width * 0.035, height: width * 0.035 }} />}
           {eventType === 'corporate' && <Briefcase style={{ color: template.accentColor, width: width * 0.035, height: width * 0.035 }} />}
-          <span className="font-medium" style={{ 
-            color: template.accentColor, 
-            fontSize: width * 0.025,
-            textShadow: template.bgImage ? '0 1px 3px rgba(255,255,255,0.7)' : 'none'
-          }}>
+          <span className="font-medium" style={{ color: template.accentColor, fontSize: width * 0.025 }}>
             SnapVault
           </span>
         </div>
@@ -382,8 +358,7 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
               width: ${sizeStyleRef.printWidth};
               height: ${sizeStyleRef.printHeight};
               background: ${selectedTemplate.bgColor};
-              ${selectedTemplate.bgImage ? `background-image: url(${window.location.origin}${selectedTemplate.bgImage}); background-size: cover; background-position: center;` : ''}
-              ${selectedTemplate.bgImage ? '' : `border: 4px solid ${selectedTemplate.borderColor};`}
+              border: 4px solid ${selectedTemplate.borderColor};
               border-radius: 12px;
               display: flex;
               flex-direction: column;
@@ -391,7 +366,6 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
               justify-content: space-between;
               padding: 5%;
               position: relative;
-              overflow: hidden;
             }
             .header { text-align: center; margin-top: 2%; }
             .subtitle { color: ${selectedTemplate.accentColor}; font-size: 2.8vmin; text-transform: uppercase; letter-spacing: 0.2em; }
@@ -455,74 +429,67 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
       const W = canvas.width;
       const H = canvas.height;
 
-      // If template has a background image, load and draw it
-      if (selectedTemplate.bgImage) {
-        const bgImg = new Image();
-        bgImg.crossOrigin = 'anonymous';
-        await new Promise((resolve, reject) => {
-          bgImg.onload = resolve;
-          bgImg.onerror = reject;
-          bgImg.src = selectedTemplate.bgImage;
-        });
-        ctx.drawImage(bgImg, 0, 0, W, H);
-      } else {
-        // Solid background
-        ctx.fillStyle = selectedTemplate.bgColor;
-        ctx.fillRect(0, 0, W, H);
+      // Background
+      ctx.fillStyle = selectedTemplate.bgColor;
+      ctx.fillRect(0, 0, W, H);
 
-        // Border
-        const bw = 8 * scale;
+      // Border
+      const bw = 8 * scale;
+      ctx.strokeStyle = selectedTemplate.borderColor;
+      ctx.lineWidth = bw;
+      ctx.strokeRect(bw / 2, bw / 2, W - bw, H - bw);
+
+      // Corner decorations for elegant/floral styles
+      if (selectedTemplate.style === 'elegant') {
+        const cs = W * 0.08;
+        ctx.lineWidth = 5 * scale;
         ctx.strokeStyle = selectedTemplate.borderColor;
-        ctx.lineWidth = bw;
-        ctx.strokeRect(bw / 2, bw / 2, W - bw, H - bw);
+        [[0, 0, cs, 0, 0, cs], [W, 0, W - cs, 0, W, cs], [0, H, cs, H, 0, H - cs], [W, H, W - cs, H, W, H - cs]].forEach(([, , x1, y1, x2, y2]) => {
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 === x2 ? x1 : (x1 < W/2 ? bw : W - bw), y1 === y2 ? y1 : (y1 < H/2 ? bw : H - bw));
+          ctx.stroke();
+        });
+      }
+
+      // Accent bars for corporate_dark / tech styles
+      if (['corporate_dark', 'tech'].includes(selectedTemplate.style)) {
+        const barW = W * 0.15;
+        ctx.fillStyle = selectedTemplate.accentColor;
+        ctx.fillRect(0, 0, barW, 5 * scale);
+        ctx.fillRect(W - barW, 0, barW, 5 * scale);
+        ctx.fillRect(0, H - 5 * scale, barW, 5 * scale);
+        ctx.fillRect(W - barW, H - 5 * scale, barW, 5 * scale);
       }
 
       ctx.textAlign = 'center';
 
-      // For image templates, draw semi-transparent text backing for readability
-      const hasImage = !!selectedTemplate.bgImage;
-
       // Header subtitle
       const headerText = eventType === 'wedding' ? 'SHARE YOUR MEMORIES' : eventType === 'birthday' ? 'CAPTURE THE FUN!' : 'EVENT PHOTOS';
-      ctx.fillStyle = selectedTemplate.textColor;
+      ctx.fillStyle = selectedTemplate.accentColor;
       ctx.font = `600 ${28 * scale}px Arial, sans-serif`;
-      if (hasImage) {
-        const hm = ctx.measureText(headerText);
-        ctx.fillStyle = 'rgba(255,255,255,0.75)';
-        ctx.fillRect(W / 2 - hm.width / 2 - 10 * scale, H * 0.065 - 22 * scale, hm.width + 20 * scale, 32 * scale);
-      }
-      ctx.fillStyle = selectedTemplate.textColor;
-      ctx.fillText(headerText, W / 2, H * 0.08);
+      ctx.letterSpacing = `${4 * scale}px`;
+      ctx.fillText(headerText, W / 2, H * 0.09);
 
       // Title
+      ctx.fillStyle = selectedTemplate.textColor;
+      ctx.font = `bold ${48 * scale}px Georgia, serif`;
       const title = eventTitle || 'Event Name';
+      // Measure and potentially shrink title
       let titleFontSize = 48 * scale;
       ctx.font = `bold ${titleFontSize}px Georgia, serif`;
       while (ctx.measureText(title).width > W * 0.85 && titleFontSize > 20 * scale) {
         titleFontSize -= 2 * scale;
         ctx.font = `bold ${titleFontSize}px Georgia, serif`;
       }
-      if (hasImage) {
-        const tm = ctx.measureText(title);
-        ctx.fillStyle = 'rgba(255,255,255,0.75)';
-        ctx.fillRect(W / 2 - tm.width / 2 - 10 * scale, H * 0.12 - titleFontSize * 0.7, tm.width + 20 * scale, titleFontSize * 1.2);
-      }
-      ctx.fillStyle = selectedTemplate.textColor;
-      ctx.fillText(title, W / 2, H * 0.14);
+      ctx.fillText(title, W / 2, H * 0.155);
 
       // Event subtitle
       if (eventSubtitle) {
-        ctx.font = `500 ${28 * scale}px Arial, sans-serif`;
-        if (hasImage) {
-          const sm = ctx.measureText(eventSubtitle);
-          ctx.fillStyle = 'rgba(255,255,255,0.7)';
-          ctx.fillRect(W / 2 - sm.width / 2 - 8 * scale, H * 0.19 - 20 * scale, sm.width + 16 * scale, 28 * scale);
-        }
         ctx.fillStyle = selectedTemplate.accentColor;
-        ctx.fillText(eventSubtitle, W / 2, H * 0.2);
+        ctx.font = `500 ${28 * scale}px Arial, sans-serif`;
+        ctx.fillText(eventSubtitle, W / 2, H * 0.21);
       }
 
-      // Generate QR code locally
+      // Generate QR code locally (no external API)
       const qrDataUrl = await QRCode.toDataURL(guestUrl || 'https://example.com', {
         width: 400,
         errorCorrectionLevel: 'H',
@@ -542,12 +509,13 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
       const qrX = (W - qrSize) / 2;
       const qrY = (H - qrSize) / 2;
 
-      // QR white background + border
+      // QR background + border
       const pad = 18 * scale;
       ctx.fillStyle = '#FFFFFF';
       ctx.strokeStyle = selectedTemplate.borderColor;
       ctx.lineWidth = 4 * scale;
 
+      // Rounded rect for QR background
       const rx = qrX - pad, ry = qrY - pad, rw = qrSize + pad * 2, rh = qrSize + pad * 2, r = 12 * scale;
       ctx.beginPath();
       ctx.moveTo(rx + r, ry); ctx.lineTo(rx + rw - r, ry); ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r);
@@ -561,26 +529,15 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
       ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
       // Footer
-      ctx.font = `bold ${36 * scale}px Arial, sans-serif`;
-      if (hasImage) {
-        const ftm = ctx.measureText('Scan to Upload');
-        ctx.fillStyle = 'rgba(255,255,255,0.75)';
-        ctx.fillRect(W / 2 - ftm.width / 2 - 10 * scale, H * 0.82 - 28 * scale, ftm.width + 20 * scale, 36 * scale);
-      }
       ctx.fillStyle = selectedTemplate.textColor;
+      ctx.font = `bold ${36 * scale}px Arial, sans-serif`;
       ctx.fillText('Scan to Upload', W / 2, H * 0.84);
 
-      ctx.font = `500 ${26 * scale}px Arial, sans-serif`;
-      if (hasImage) {
-        const ptm = ctx.measureText('Photos & Videos');
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.fillRect(W / 2 - ptm.width / 2 - 8 * scale, H * 0.875 - 20 * scale, ptm.width + 16 * scale, 28 * scale);
-      }
       ctx.fillStyle = selectedTemplate.accentColor;
+      ctx.font = `500 ${26 * scale}px Arial, sans-serif`;
       ctx.fillText('Photos & Videos', W / 2, H * 0.895);
 
       ctx.font = `600 ${22 * scale}px Arial, sans-serif`;
-      ctx.fillStyle = selectedTemplate.accentColor;
       ctx.fillText('SnapVault', W / 2, H * 0.945);
 
       // Trigger download
