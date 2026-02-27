@@ -13,6 +13,7 @@ function PaymentGate({ event, guestUrl, onPaymentConfirmed }) {
   const [selectedSize, setSelectedSize] = useState('10x8');
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
+  const [paypalClicked, setPaypalClicked] = useState(false);
 
   const templates = QR_CARD_TEMPLATES[event.event_type] || QR_CARD_TEMPLATES.wedding;
   const templateList = Object.entries(templates).map(([, val]) => val);
