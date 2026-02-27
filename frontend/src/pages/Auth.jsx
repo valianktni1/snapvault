@@ -1,13 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
-
-const REVIEWS = [
-  { name: 'Sarah & Tom', role: 'Wedding', text: 'We trialled SnapVault at our wedding and guests loved it. So easy to scan and upload — we had over 200 photos by the end of the night!' },
-  { name: 'Rachel M.', role: 'Birthday Party', text: "Used this for my daughter's 18th. The QR cards looked brilliant on the tables and we got photos we'd never have seen otherwise." },
-  { name: 'David K.', role: 'Corporate Event', text: 'Simple, private and self-hosted — exactly what we needed for our company conference. The media gallery made sharing a breeze.' },
-];
 
 function ReviewCarousel() {
   const [active, setActive] = useState(0);
