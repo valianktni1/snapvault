@@ -183,6 +183,10 @@ export default function Auth({ defaultTab = 'login' }) {
             </p>
           </div>
 
+          {showForgot ? (
+            <ForgotPassword onBack={() => setShowForgot(false)} />
+          ) : (
+          <>
           {/* Tab Toggle */}
           <div className="flex bg-slate-100 rounded-xl p-1 mb-6">
             <button
