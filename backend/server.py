@@ -229,12 +229,20 @@ def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
     text_rgb = hex_to_rgb(tmpl["textColor"])
     accent_rgb = hex_to_rgb(tmpl["accentColor"])
 
-    img = Image.new("RGB", (width, height), bg_rgb)
-    draw = ImageDraw.Draw(img)
+    # Check for background image
+    bg_image_name = tmpl.get("bgImage")
+    templates_dir = Path(__file__).parent / "templates"
 
-    # Draw border
-    bw = 6
-    draw.rectangle([bw // 2, bw // 2, width - bw // 2, height - bw // 2], outline=border_rgb, width=bw)
+    if bg_image_name and (templates_dir / bg_image_name).exists():
+        img = Image.open(templates_dir / bg_image_name).convert("RGB")
+        img = img.resize((width, height), Image.LANCZOS)
+    else:
+        img = Image.new("RGB", (width, height), bg_rgb)
+        draw_temp = ImageDraw.Draw(img)
+        bw = 6
+        draw_temp.rectangle([bw // 2, bw // 2, width - bw // 2, height - bw // 2], outline=border_rgb, width=bw)
+
+    draw = ImageDraw.Draw(img)
 
     # Load fonts
     try:
@@ -246,31 +254,38 @@ def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
         sans_reg = ImageFont.load_default()
         sans_bold = ImageFont.load_default()
 
-    # Header subtitle text
+    has_bg = bg_image_name is not None
+
+    # Helper: draw text with optional backing for readability on images
+    def draw_text_with_backing(x, y, text, font, fill, anchor="mm"):
+        bbox = draw.textbbox((0, 0), text, font=font)
+        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        if has_bg:
+            px, py = 8, 4
+            draw.rectangle([x - tw // 2 - px, y - th // 2 - py, x + tw // 2 + px, y + th // 2 + py],
+                           fill=(255, 255, 255, 190) if img.mode == 'RGBA' else (255, 255, 255))
+        draw.text((x - tw // 2, y - th // 2), text, fill=fill, font=font)
+
+    # Header subtitle
     header_map = {"wedding": "SHARE YOUR MEMORIES", "birthday": "CAPTURE THE FUN!", "corporate": "EVENT PHOTOS"}
     header_text = header_map.get(event_type, "EVENT PHOTOS")
-    hbox = draw.textbbox((0, 0), header_text, font=sans_reg)
-    draw.text(((width - (hbox[2] - hbox[0])) // 2, int(height * 0.07)), header_text, fill=accent_rgb, font=sans_reg)
+    draw_text_with_backing(width // 2, int(height * 0.07), header_text, sans_reg, text_rgb)
 
-    # Event title
-    tbox = draw.textbbox((0, 0), event_title, font=serif_bold)
-    title_w = tbox[2] - tbox[0]
-    # If title is too wide, truncate
+    # Title
     display_title = event_title
+    tbox = draw.textbbox((0, 0), display_title, font=serif_bold)
+    title_w = tbox[2] - tbox[0]
     if title_w > width * 0.85:
         while title_w > width * 0.85 and len(display_title) > 10:
             display_title = display_title[:-1]
             tbox = draw.textbbox((0, 0), display_title + "...", font=serif_bold)
             title_w = tbox[2] - tbox[0]
         display_title += "..."
-        tbox = draw.textbbox((0, 0), display_title, font=serif_bold)
-        title_w = tbox[2] - tbox[0]
-    draw.text(((width - title_w) // 2, int(height * 0.13)), display_title, fill=text_rgb, font=serif_bold)
+    draw_text_with_backing(width // 2, int(height * 0.14), display_title, serif_bold, text_rgb)
 
     # Event subtitle
     if event_subtitle:
-        sbox = draw.textbbox((0, 0), event_subtitle, font=sans_reg)
-        draw.text(((width - (sbox[2] - sbox[0])) // 2, int(height * 0.21)), event_subtitle, fill=accent_rgb, font=sans_reg)
+        draw_text_with_backing(width // 2, int(height * 0.21), event_subtitle, sans_reg, accent_rgb)
 
     # Generate QR code image
     qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=2)
@@ -294,17 +309,13 @@ def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
     img.paste(qr_img, (qr_x, qr_y))
 
     # Footer
-    ft = "Scan to Upload"
-    fbox = draw.textbbox((0, 0), ft, font=sans_bold)
-    draw.text(((width - (fbox[2] - fbox[0])) // 2, int(height * 0.83)), ft, fill=text_rgb, font=sans_bold)
+    draw_text_with_backing(width // 2, int(height * 0.84), "Scan to Upload", sans_bold, text_rgb)
+    draw_text_with_backing(width // 2, int(height * 0.89), "Photos & Videos", sans_reg, accent_rgb)
 
-    pt = "Photos & Videos"
-    pbox = draw.textbbox((0, 0), pt, font=sans_reg)
-    draw.text(((width - (pbox[2] - pbox[0])) // 2, int(height * 0.89)), pt, fill=accent_rgb, font=sans_reg)
-
-    bt = "SnapVault"
-    bbox = draw.textbbox((0, 0), bt, font=sans_reg)
-    draw.text(((width - (bbox[2] - bbox[0])) // 2, int(height * 0.94)), bt, fill=accent_rgb, font=sans_reg)
+    # Brand
+    bbox = draw.textbbox((0, 0), "SnapVault", font=sans_reg)
+    bw_text = bbox[2] - bbox[0]
+    draw.text(((width - bw_text) // 2, int(height * 0.94)), "SnapVault", fill=accent_rgb, font=sans_reg)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
