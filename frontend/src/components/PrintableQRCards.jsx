@@ -217,24 +217,35 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
 
   return (
     <div
-      className="relative flex flex-col items-center justify-between rounded-lg shadow-lg print:shadow-none"
+      className="relative flex flex-col items-center justify-between rounded-lg shadow-lg print:shadow-none overflow-hidden"
       style={{
         backgroundColor: template.bgColor,
-        border: `4px solid ${template.borderColor}`,
+        border: template.bgImage ? 'none' : `4px solid ${template.borderColor}`,
         width: width,
         height: height,
-        padding: width * 0.05
+        padding: template.bgImage ? 0 : width * 0.05
       }}
     >
-      {getDecorations()}
+      {/* Background image for image-based templates */}
+      {template.bgImage && (
+        <img
+          src={template.bgImage}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ zIndex: 0 }}
+        />
+      )}
+
+      {!template.bgImage && getDecorations()}
       
       {/* Header */}
-      <div className="text-center z-10" style={{ marginTop: height * 0.02 }}>
+      <div className="text-center z-10" style={{ marginTop: template.bgImage ? height * 0.06 : height * 0.02 }}>
         <p
           className="uppercase tracking-widest"
           style={{ 
-            color: template.accentColor,
-            fontSize: width * 0.028
+            color: template.textColor,
+            fontSize: width * 0.028,
+            textShadow: template.bgImage ? '0 1px 3px rgba(255,255,255,0.7)' : 'none'
           }}
         >
           {eventType === 'wedding' ? 'Share Your Memories' :
@@ -247,7 +258,8 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
             color: template.textColor, 
             fontFamily: template.headerFont,
             fontSize: width * 0.055,
-            marginTop: height * 0.01
+            marginTop: height * 0.01,
+            textShadow: template.bgImage ? '0 1px 4px rgba(255,255,255,0.8)' : 'none'
           }}
         >
           {eventTitle || 'Event Name'}
@@ -256,7 +268,8 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
           <p style={{ 
             color: template.accentColor,
             fontSize: width * 0.028,
-            marginTop: height * 0.01
+            marginTop: height * 0.01,
+            textShadow: template.bgImage ? '0 1px 3px rgba(255,255,255,0.7)' : 'none'
           }}>
             {eventSubtitle}
           </p>
@@ -270,7 +283,8 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
           style={{ 
             backgroundColor: '#FFFFFF', 
             border: `3px solid ${template.borderColor}`,
-            padding: qrSize * 0.1
+            padding: qrSize * 0.1,
+            boxShadow: template.bgImage ? '0 4px 20px rgba(0,0,0,0.15)' : 'none'
           }}
         >
           <QRCodeSVG
