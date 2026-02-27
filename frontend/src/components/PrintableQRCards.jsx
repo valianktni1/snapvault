@@ -13,48 +13,52 @@ const SIZE_OPTIONS = [
 const QR_CARD_TEMPLATES = {
   wedding: [
     {
-      key: 'elegant_frame',
-      name: 'Elegant Frame',
-      description: 'Classic gold border with script text',
-      bgColor: '#FDF8F3',
-      borderColor: '#D4AF37',
+      key: 'vintage_rose',
+      name: 'Vintage Rose',
+      description: 'Parchment with white roses & gold frame',
+      bgColor: '#F5EDDF',
+      borderColor: '#C5A55A',
       textColor: '#2C1810',
-      accentColor: '#D4AF37',
+      accentColor: '#8B7355',
       headerFont: "'Playfair Display', serif",
-      style: 'elegant'
+      style: 'image',
+      bgImage: '/templates/wedding_vintage_rose.png'
     },
     {
-      key: 'romantic_floral',
-      name: 'Romantic Floral',
-      description: 'Soft pink with floral corners',
-      bgColor: '#FFF5F7',
-      borderColor: '#E8B4BC',
-      textColor: '#6B2D3D',
-      accentColor: '#D4869C',
+      key: 'blush_peony',
+      name: 'Blush Peony',
+      description: 'Soft pink peonies & rose gold frame',
+      bgColor: '#FFF0F3',
+      borderColor: '#D4869C',
+      textColor: '#4A2030',
+      accentColor: '#C77D91',
       headerFont: "'Playfair Display', serif",
-      style: 'floral'
+      style: 'image',
+      bgImage: '/templates/wedding_blush_peony.png'
     },
     {
-      key: 'modern_minimal',
-      name: 'Modern Minimal',
-      description: 'Clean lines, sophisticated feel',
-      bgColor: '#FFFFFF',
-      borderColor: '#1A1A1A',
-      textColor: '#1A1A1A',
-      accentColor: '#666666',
+      key: 'eucalyptus',
+      name: 'Eucalyptus Garden',
+      description: 'Fresh greenery with gold accents',
+      bgColor: '#F0F5F0',
+      borderColor: '#7D9B76',
+      textColor: '#2D3B2D',
+      accentColor: '#6B8E5A',
       headerFont: "'Playfair Display', serif",
-      style: 'minimal'
+      style: 'image',
+      bgImage: '/templates/wedding_eucalyptus.png'
     },
     {
-      key: 'rustic_kraft',
-      name: 'Rustic Charm',
-      description: 'Warm kraft paper aesthetic',
-      bgColor: '#F5E6D3',
-      borderColor: '#8B7355',
-      textColor: '#4A3728',
-      accentColor: '#6B8E23',
+      key: 'classic_gold',
+      name: 'Classic Gold',
+      description: 'Luxury ivory with gold flourishes',
+      bgColor: '#FAF6EE',
+      borderColor: '#C5A55A',
+      textColor: '#2C2418',
+      accentColor: '#A8903C',
       headerFont: "'Playfair Display', serif",
-      style: 'rustic'
+      style: 'image',
+      bgImage: '/templates/wedding_classic_gold.png'
     }
   ],
   birthday: [
