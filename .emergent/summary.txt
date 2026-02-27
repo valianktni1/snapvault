@@ -1,0 +1,185 @@
+<analysis>**original_problem_statement:**
+The user wants to build a web application called GuestPix for events like weddings, birthdays, and corporate functions.
+**PRODUCT REQUIREMENTS:**
+- **Core Functionality:** Allow event guests to upload photos, videos, and audio messages.
+- **Customization:** Event creators can choose from 4 different printable QR code templates for each event type (Wedding, Birthday, Corporate).
+- **File Handling:** Max file size of 200MB, with video compression for files over 80MB.
+- **User Roles:** An  with full platform access and s who manage their own events.
+- **Deployment:** The user is self-hosting the application on Truenas Scale using Docker and Dockge, pulling the code from a public GitHub repository.
+- **Branding:** A specific logo has been integrated, and a persistent footer is required on all pages.
+- **Payment & Email:** A robust payment flow is required. The organizer must pay a fixed fee of £40. After the admin manually approves the payment, a personalized email with the event's QR code attached is automatically sent to the organizer.
+- **Admin Features:** The admin must be able to manage their own password and configure system-wide SMTP settings for sending emails.
+- **User Management:** A Forgot Password feature is required for organizers.
+
+**User's preferred language**: English
+
+**what currently exists?**
+A full-stack application (React frontend, FastAPI backend, MongoDB) is deployed on the user's TrueNAS server via a persistent Docker Compose setup. The application is stable and includes:
+- User authentication (organizer/admin roles) and a Forgot Password feature (partially implemented).
+- Event creation and management.
+- Media uploads (photo, video, audio) with video compression.
+- An admin dashboard to manage users, events, and system-wide SMTP settings.
+- A secure, admin-approval-based payment flow. When an admin approves a payment, a personalized confirmation email with the chosen QR card is automatically sent.
+- A new logo and a persistent footer have been integrated across the application.
+- A fix for QR card downloads, using a local library to avoid CORS issues.
+
+**Last working item**:
+- **Last item agent was working:** Implementing a Forgot Password feature. This involved creating the frontend UI (, ), the backend endpoints (, ), and the logic for sending a reset email. The agent was in the middle of solving how to correctly generate the password reset link for the user's self-hosted environment.
+- **Status:** IN PROGRESS
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** both. The agent must perform end-to-end testing of the entire password reset flow, from requesting the reset to logging in with the new password.
+- **User Testing Done:** N
+
+**All Pending/In progress Issue list**:
+- **Issue 1: Complete and test the Forgot Password feature (P0)**
+    - **Attempted fixes:** The agent created the necessary frontend components and backend endpoints. It correctly identified that the backend doesn't know the frontend's domain to create the reset link, and proposed a solution.
+    - **Next debug checklist:**
+        1.  **Modify :** Update the  endpoint to accept a  parameter in its request body.
+        2.  **Modify :** In the  function, pass the frontend's origin URL () as  in the  POST request to .
+        3.  **Test:** Execute the full end-to-end flow: request a reset, use the generated link (from logs, as email won't send in the test environment), set a new password, and log in.
+    - **Why fix this issue and what will be achieved with the fix?** This is a critical user management feature. Without it, users who forget their passwords are permanently locked out of their accounts.
+    - **Status:** IN PROGRESS
+    - **Is recurring issue?** N
+    - **Should Test frontend/backend/both after fix?** Both
+    - **Blocked on other issue:** None.
+
+**In progress Task List**:
+- **Task 1: Complete and test the Forgot Password feature (P0)**
+    - **Where to resume:** Implementing the plan to pass the  from the frontend to the backend to correctly generate the password reset link.
+    - **What will be achieved with this?** A fully functional and secure password reset capability for all organizers.
+    - **Status:** IN PROGRESS
+    - **Should Test frontend/backend/both after fix?** Both.
+    - **Blocked on something:** None.
+
+**Upcoming and Future Tasks**
+- **Upcoming Tasks:**
+    - **Task 1: Improve QR Code Template Designs (P1):** The user wants more premium, visually appealing designs for the wedding templates, similar to an example they provided. The agent should generate 4 high-quality background images and integrate them, ensuring one design remains plain but elegant. This was attempted and reverted, so the approach needs to be more careful.
+- **Future Tasks:**
+    - **Task 2: Improve Birthday & Corporate QR Code Templates (P2):** After the wedding templates are updated, apply similar quality improvements to the designs for other event types.
+    - **Task 3: Refactor  (P2):** The main backend file is becoming large. Propose a refactoring task to split models, routes, and services into separate files/directories for better maintainability.
+
+**Completed work in this session**
+- **Admin-Approved Payment Flow:** Implemented a secure manual approval flow. Organizers submit a payment claim, which an admin must approve in the dashboard to unlock the QR code and trigger the confirmation email.
+- **Personalized Confirmation Email:** Enhanced the automated email to include the organizer's name, a summary of their chosen template/size, and a calculated gallery expiry date.
+- **UI/Branding Updates:** Integrated a new logo and added a persistent SnapVault designed and hosted by Weddings By Mark footer to all pages.
+- **QR Code Download Fix:** Resolved a critical bug by replacing a faulty external API call with a local  library for generating QR codes on the client side.
+- **Iterative Bug Fixing:** Addressed multiple user complaints regarding the payment flow, evolving from a flawed timer-based system to the current robust admin-approval model.
+- **Code Reversions:** Successfully reverted unwanted changes (testimonials, initial template redesign) at the user's request, maintaining a stable codebase.
+
+**Earlier issues found/mentioned but not fixed**
+- None.
+
+**Known issue recurrence from previous fork**
+- None.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Frontend:** React, TailwindCSS, , , .
+- **Backend:** FastAPI, Pydantic, Motor (async MongoDB driver), FFmpeg, JWT,  for tokens.
+- **Database:** MongoDB.
+- **Deployment:** Docker, Docker Compose, Nginx on a user-managed TrueNAS server.
+
+**key DB schema**
+-   **users:**  (reset fields are new)
+-   **events:** 
+-   **settings:** 
+
+**changes in tech stack**
+- The frontend now uses the  library to generate QR codes locally, which was installed via yarn add v1.22.22
+[1/4] Resolving packages...
+[2/4] Fetching packages...
+[3/4] Linking dependencies...
+[4/4] Building fresh packages...
+success Saved lockfile.
+success Saved 27 new dependencies.
+info Direct dependencies
+└─ qrcode@1.5.4
+info All dependencies
+├─ ansi-regex@5.0.1
+├─ ansi-styles@4.3.0
+├─ camelcase@5.3.1
+├─ cliui@6.0.0
+├─ color-convert@2.0.1
+├─ color-name@1.1.4
+├─ dijkstrajs@1.0.3
+├─ emoji-regex@8.0.0
+├─ find-up@4.1.0
+├─ get-caller-file@2.0.5
+├─ is-fullwidth-code-point@3.0.0
+├─ locate-path@5.0.0
+├─ p-limit@2.3.0
+├─ p-locate@4.1.0
+├─ p-try@2.2.0
+├─ path-exists@4.0.0
+├─ pngjs@5.0.0
+├─ qrcode@1.5.4
+├─ require-directory@2.1.1
+├─ require-main-filename@2.0.0
+├─ set-blocking@2.0.0
+├─ string-width@4.2.3
+├─ which-module@2.0.1
+├─ wrap-ansi@6.2.0
+├─ y18n@4.0.3
+├─ yargs-parser@18.1.3
+└─ yargs@15.4.1
+Done in 1.26s..
+
+**All files of reference**
+-    (for password reset endpoints)
+-    (for Forgot Password? link)
+-    (new page for the reset form)
+-    (for the new  route)
+-    (user's deployment file)
+
+**Areas that need refactoring**:
+- The  file has grown to over 1000 lines and contains models, routes, and helper functions. It should be broken down into a standard FastAPI project structure (e.g., , , ) to improve maintainability and scalability.
+
+**key api endpoints**
+-    (New, In Progress)
+-    (New, In Progress)
+-    (New, Completed)
+-    (Modified to trigger  status)
+
+**Critical Info for New Agent**
+-   **User-Managed Deployment:** The user deploys the application on their own TrueNAS server. Your role is to provide correct, working code. The user will handle the deployment by pushing to their GitHub and running  commands you provide.
+-   **User Experience is Key:** The user gets very frustrated by features that are not robust or have loopholes (e.g., the initial payment flow). Solutions must be thoroughly considered and tested.
+-   **Communication:** Explain changes in terms of user benefits. Always remind the user to use the **Save to GitHub** button before providing the three  commands for them to run on their server.
+-   **Code Revert:** The user is not afraid to ask for a full revert if they are unhappy with a change. Be prepared to roll back work to the last stable state.
+
+**documents and test reports created in this job**
+-    (Successful test report for the admin-approval payment flow)
+
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **User:** Requests a forgot password feature. (COMPLETED - IN PROGRESS)
+2.  **User:** Emphasizes that new features must not break existing ones. (NOTE)
+3.  **User:** Asks to make the automated confirmation email more personal and detailed. (COMPLETED)
+4.  **User:** Confirms SMTP settings are still pre-filled. (COMPLETED)
+5.  **User:** Asks for a revert of the new template designs. (COMPLETED)
+6.  **User:** Demands a revert to the last working version. (COMPLETED)
+7.  **User:** Asks to see the new wedding designs before committing. (PENDING - Part of upcoming tasks)
+8.  **User:** Expresses frustration that they have to re-enter their SMTP password. (ADDRESSED)
+9.  **User:** Incorrectly states the SMTP settings are missing from the admin panel, then realizes their mistake. (ADDRESSED)
+10. **User:** Asks for confirmation that unauthenticated users cannot access the dashboard. (COMPLETED)
+
+**Project Health Check:**
+-   **Working:** The core application, including a robust payment/email flow, is stable.
+-   **Broken:** The Forgot Password feature is partially implemented and non-functional.
+-   **Mocked:** None.
+
+**3rd Party Integrations**
+-   **PayPal.me:** Manual payment link (). Verification is done by the admin.
+-   **Hostinger SMTP:** Used for sending system emails (payment confirmation, password reset). Configured by the admin in the UI.
+
+**Testing status**
+-   **Testing agent used after significant changes:** YES, successfully used for the admin-approved payment flow.
+-   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Test files created:** None.
+-   **Known regressions:** None.
+
+**Credentials to test flow:**
+-   **Admin:**  / Password is unknown. The new password reset flow is the only way to regain access if the password is lost.
+
+**What agent forgot to execute**
+- The agent started implementing the Forgot Password feature but did not complete the final step of passing the  from the frontend to the backend to ensure the reset link works in the user's self-hosted environment. The code for this is incomplete.</analysis>

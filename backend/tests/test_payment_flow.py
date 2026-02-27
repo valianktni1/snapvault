@@ -429,7 +429,7 @@ class TestFullPaymentFlowE2E:
         print(f"✓ Step 1: Event created with is_paid=False, payment_status='unpaid'")
         
         # Step 2: Submit payment
-        guest_url = f"https://qr-upload-staging.preview.emergentagent.com/event/{event['slug']}"
+        guest_url = f"https://guestpix-preview.preview.emergentagent.com/event/{event['slug']}"
         submit_resp = organizer_session.post(f"{BASE_URL}/api/events/{event_id}/submit-payment", json={
             "qr_template": "romantic_floral",
             "qr_size": "10x8",
