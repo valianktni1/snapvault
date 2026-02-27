@@ -6,7 +6,7 @@ import { getTemplate } from '../utils/themes';
 import {
   Users, Calendar, Images, Download, Trash2,
   Heart, Cake, Briefcase, Shield, Eye, HardDrive,
-  AlertTriangle, Mail, Send, CheckCircle2
+  AlertTriangle, Mail, Send, CheckCircle2, Clock, CreditCard
 } from 'lucide-react';
 
 const EVENT_ICONS = { wedding: Heart, birthday: Cake, corporate: Briefcase };
