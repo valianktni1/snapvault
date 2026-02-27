@@ -154,7 +154,7 @@ function PaymentGate({ event, guestUrl, onPaymentConfirmed }) {
                 target="_blank"
                 rel="noreferrer"
                 data-testid="paypal-pay-btn"
-                onClick={() => setPaypalClicked(true)}
+                onClick={handlePaypalClick}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[#0070ba] text-white rounded-xl font-semibold text-sm hover:bg-[#005ea6] transition-all active:scale-[0.98] shadow-sm"
               >
                 <CreditCard className="w-5 h-5" />
@@ -162,7 +162,7 @@ function PaymentGate({ event, guestUrl, onPaymentConfirmed }) {
               </a>
               {paypalClicked && (
                 <p className="text-xs text-emerald-600 font-medium mt-2 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> PayPal opened — complete your payment then confirm below
+                  <CheckCircle2 className="w-3.5 h-3.5" /> PayPal opened — complete your payment, confirmation will unlock shortly
                 </p>
               )}
             </div>
