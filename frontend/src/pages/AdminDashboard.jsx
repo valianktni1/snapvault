@@ -91,6 +91,23 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleApprovePayment = async (eventId, eventTitle) => {
+    if (!window.confirm(`Approve payment for "${eventTitle}"?\n\nThis will send their QR card to them by email.`)) return;
+    setApprovingEvent(eventId);
+    try {
+      const res = await api.post(`/admin/events/${eventId}/approve-payment`);
+      // Update event in local state
+      setEvents(prev => prev.map(e =>
+        e.id === eventId ? { ...e, is_paid: true, payment_status: 'approved' } : e
+      ));
+      alert(res.data.message);
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to approve');
+    } finally {
+      setApprovingEvent(null);
+    }
+  };
+
   const handleDeleteUser = async (userId, userName) => {
     if (!window.confirm(`Delete user "${userName}" and ALL their events and media? This cannot be undone.`)) return;
     setDeletingUser(userId);
