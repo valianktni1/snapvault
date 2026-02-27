@@ -492,8 +492,7 @@ async def forgot_password(data: ForgotPasswordRequest):
         raise HTTPException(503, "Email service is not configured. Please contact the administrator.")
 
     try:
-        # Build reset URL using the Referer header or fallback
-        site_url = os.environ.get("SITE_URL", "")
+        site_url = data.site_url or os.environ.get("SITE_URL", "")
         reset_url = f"{site_url}/reset-password?token={reset_token}"
 
         msg_obj = MIMEMultipart()
