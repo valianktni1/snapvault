@@ -14,6 +14,22 @@ function PaymentGate({ event, guestUrl, onPaymentConfirmed }) {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
   const [paypalClicked, setPaypalClicked] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [timerDone, setTimerDone] = useState(false);
+
+  // Countdown timer — starts when PayPal is clicked
+  useEffect(() => {
+    if (!paypalClicked || timerDone) return;
+    if (countdown <= 0) { setTimerDone(true); return; }
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [paypalClicked, countdown, timerDone]);
+
+  const handlePaypalClick = () => {
+    setPaypalClicked(true);
+    setCountdown(90); // 90 second wait
+    setTimerDone(false);
+  };
 
   const templates = QR_CARD_TEMPLATES[event.event_type] || QR_CARD_TEMPLATES.wedding;
   const templateList = Object.entries(templates).map(([, val]) => val);
