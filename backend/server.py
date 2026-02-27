@@ -918,7 +918,6 @@ async def approve_payment(event_id: str, current_user=Depends(get_admin_user)):
 
     # Look up template display name
     templates = QR_CARD_TEMPLATES.get(event["event_type"], {})
-    tmpl_data = templates.get(qr_template, {})
     qr_template_name = qr_template.replace("_", " ").title()
 
     if guest_url and qr_template:
