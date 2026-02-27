@@ -45,6 +45,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth defaultTab="register" />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/events/create" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
