@@ -312,24 +312,71 @@ def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
     return buf.getvalue()
 
 
-async def send_qr_email(to_email: str, event_title: str, qr_image_bytes: bytes) -> bool:
+async def send_qr_email(to_email: str, organizer_name: str, event_title: str,
+                        event_date: str, qr_template_name: str, qr_size: str,
+                        qr_image_bytes: bytes) -> bool:
     """Send the QR card image via email using saved SMTP settings."""
     settings = await db.settings.find_one({"type": "smtp"})
     if not settings or not settings.get("smtp_password"):
         logger.warning("SMTP not configured or password missing — skipping email")
         return False
 
+    size_label = '10" x 8"' if qr_size == "10x8" else '8" x 6"'
+
+    # Calculate 3-month deadline from event date
+    deadline_text = ""
+    if event_date:
+        try:
+            ed = datetime.fromisoformat(event_date)
+            deadline = ed + timedelta(days=90)
+            deadline_text = deadline.strftime("%d %B %Y")
+        except Exception:
+            deadline_text = ""
+
     try:
         msg = MIMEMultipart()
         msg["From"] = settings["smtp_user"]
         msg["To"] = to_email
-        msg["Subject"] = f"Your SnapVault QR Card — {event_title}"
+        msg["Subject"] = f"Your SnapVault QR Card is Ready — {event_title}"
 
-        html = f"""<html><body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-<h2 style="color:#1a1a2e;">Your QR Card is Ready!</h2>
-<p>Thank you for your payment. Your printable QR card for <strong>{event_title}</strong> is attached to this email.</p>
-<p>Print this card and place it at your venue for guests to scan and upload their photos and videos.</p>
-<p style="color:#666;font-size:14px;margin-top:20px;">— The SnapVault Team</p>
+        html = f"""<html><body style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:30px;color:#2C1810;background:#FDFAF6;">
+
+<h2 style="color:#1a1a2e;margin-bottom:5px;">Thank You, {organizer_name}!</h2>
+
+<p style="font-size:16px;line-height:1.6;">
+We really appreciate you choosing <strong>SnapVault</strong> for your event. It means the world to us that you've trusted us to be part of <strong>{event_title}</strong> — we hope it's a truly wonderful occasion.
+</p>
+
+<p style="font-size:16px;line-height:1.6;">
+Your payment has been confirmed and your personalised QR card is attached to this email, ready for you to print and display at your venue. Once your guests scan the code, they'll be able to upload their photos and videos straight to your private gallery.
+</p>
+
+<div style="background:#F5F0E8;border-radius:12px;padding:18px 22px;margin:20px 0;border-left:4px solid #C5A55A;">
+  <p style="margin:0 0 6px 0;font-size:14px;color:#666;">Your Order Summary</p>
+  <p style="margin:0;font-size:15px;"><strong>Event:</strong> {event_title}</p>
+  <p style="margin:4px 0 0 0;font-size:15px;"><strong>Template:</strong> {qr_template_name}</p>
+  <p style="margin:4px 0 0 0;font-size:15px;"><strong>Card Size:</strong> {size_label}</p>
+</div>
+
+<p style="font-size:16px;line-height:1.6;">
+Your guest gallery will be available for <strong>three months from your event date</strong>{f" (until {deadline_text})" if deadline_text else ""} — that's plenty of time for you and your guests to browse, relive the memories and download everything at your leisure. No rush at all!
+</p>
+
+<p style="font-size:16px;line-height:1.6;">
+If you have any questions or need anything at all, don't hesitate to get in touch. We're here to help make your event as special as possible.
+</p>
+
+<p style="font-size:16px;line-height:1.6;margin-top:25px;">
+Warm regards,<br/>
+<strong>Mark</strong><br/>
+<em>Weddings By Mark</em>
+</p>
+
+<hr style="border:none;border-top:1px solid #E5DDD0;margin:25px 0 15px 0;"/>
+<p style="font-size:12px;color:#999;text-align:center;">
+SnapVault — Designed and hosted by Weddings By Mark
+</p>
+
 </body></html>"""
         msg.attach(MIMEText(html, "html"))
 
