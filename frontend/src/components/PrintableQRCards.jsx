@@ -382,7 +382,8 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
               width: ${sizeStyleRef.printWidth};
               height: ${sizeStyleRef.printHeight};
               background: ${selectedTemplate.bgColor};
-              border: 4px solid ${selectedTemplate.borderColor};
+              ${selectedTemplate.bgImage ? `background-image: url(${window.location.origin}${selectedTemplate.bgImage}); background-size: cover; background-position: center;` : ''}
+              ${selectedTemplate.bgImage ? '' : `border: 4px solid ${selectedTemplate.borderColor};`}
               border-radius: 12px;
               display: flex;
               flex-direction: column;
@@ -390,6 +391,7 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
               justify-content: space-between;
               padding: 5%;
               position: relative;
+              overflow: hidden;
             }
             .header { text-align: center; margin-top: 2%; }
             .subtitle { color: ${selectedTemplate.accentColor}; font-size: 2.8vmin; text-transform: uppercase; letter-spacing: 0.2em; }
