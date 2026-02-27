@@ -270,6 +270,19 @@ export default function Auth({ defaultTab = 'login' }) {
               </div>
             </div>
 
+            {tab === 'login' && (
+              <div className="text-right -mt-1">
+                <button
+                  type="button"
+                  data-testid="forgot-password-link"
+                  onClick={() => setShowForgot(true)}
+                  className="text-xs text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
             <button
               data-testid="auth-submit-btn"
               type="submit"
