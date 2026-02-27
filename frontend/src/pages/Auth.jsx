@@ -15,7 +15,7 @@ function ForgotPassword({ onBack }) {
     setLoading(true);
     setError('');
     try {
-      await api.post('/auth/forgot-password', { email });
+      await api.post('/auth/forgot-password', { email, site_url: window.location.origin });
       setSent(true);
     } catch (err) {
       setError(err.response?.data?.detail || 'Something went wrong. Please try again.');
