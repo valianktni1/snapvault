@@ -3,35 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 
-function ReviewCarousel() {
-  const [active, setActive] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => setActive(i => (i + 1) % REVIEWS.length), 3500);
-    return () => clearInterval(timer);
-  }, []);
-
-  const r = REVIEWS[active];
-  return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 min-h-[110px] transition-all" data-testid="review-carousel">
-      <p className="text-white/90 text-sm leading-relaxed italic mb-3">"{r.text}"</p>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-white font-semibold text-sm">{r.name}</p>
-          <p className="text-indigo-200 text-xs">{r.role}</p>
-        </div>
-        <div className="flex gap-1.5">
-          {REVIEWS.map((_, i) => (
-            <div
-              key={i}
-              className={`w-1.5 h-1.5 rounded-full transition-all ${i === active ? 'bg-white w-4' : 'bg-white/30'}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function Auth({ defaultTab = 'login' }) {
   const [tab, setTab] = useState(defaultTab);
   const [form, setForm] = useState({ email: '', password: '', name: '' });
