@@ -39,6 +39,9 @@ function PaymentGate({ event, guestUrl, onPaymentConfirmed }) {
       setError('Please select a QR card template first');
       return;
     }
+    if (!window.confirm('Please confirm: Have you completed your £40 PayPal payment?\n\nBy clicking OK you are confirming that payment has been made. If payment is not received your QR card will be deactivated.')) {
+      return;
+    }
     setConfirming(true);
     setError('');
     try {
