@@ -461,6 +461,7 @@ async def change_password(data: ChangePassword, current_user=Depends(get_current
 
 class ForgotPasswordRequest(BaseModel):
     email: str
+    site_url: str = ""
 
 
 class ResetPasswordRequest(BaseModel):
