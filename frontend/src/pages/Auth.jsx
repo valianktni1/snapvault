@@ -299,6 +299,8 @@ export default function Auth({ defaultTab = 'login' }) {
               }
             </button>
           </form>
+          </>
+          )}
 
           <p className="text-center text-xs text-slate-400 mt-6">
             Your data stays on your server. Always.
