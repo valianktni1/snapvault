@@ -184,10 +184,10 @@ def fmt_user_response(user: dict) -> dict:
 # --- QR Card Templates (mirrors frontend PrintableQRCards.jsx) ---
 QR_CARD_TEMPLATES = {
     "wedding": {
-        "elegant_frame": {"bgColor": "#FDF8F3", "borderColor": "#D4AF37", "textColor": "#2C1810", "accentColor": "#D4AF37"},
-        "romantic_floral": {"bgColor": "#FFF5F7", "borderColor": "#E8B4BC", "textColor": "#6B2D3D", "accentColor": "#D4869C"},
-        "modern_minimal": {"bgColor": "#FFFFFF", "borderColor": "#1A1A1A", "textColor": "#1A1A1A", "accentColor": "#666666"},
-        "rustic_kraft": {"bgColor": "#F5E6D3", "borderColor": "#8B7355", "textColor": "#4A3728", "accentColor": "#6B8E23"},
+        "vintage_rose": {"bgColor": "#F5EDDF", "borderColor": "#C5A55A", "textColor": "#2C1810", "accentColor": "#8B7355", "bgImage": "wedding_vintage_rose.png"},
+        "blush_peony": {"bgColor": "#FFF0F3", "borderColor": "#D4869C", "textColor": "#4A2030", "accentColor": "#C77D91", "bgImage": "wedding_blush_peony.png"},
+        "eucalyptus": {"bgColor": "#F0F5F0", "borderColor": "#7D9B76", "textColor": "#2D3B2D", "accentColor": "#6B8E5A", "bgImage": "wedding_eucalyptus.png"},
+        "classic_gold": {"bgColor": "#FAF6EE", "borderColor": "#C5A55A", "textColor": "#2C2418", "accentColor": "#A8903C", "bgImage": "wedding_classic_gold.png"},
     },
     "birthday": {
         "confetti_party": {"bgColor": "#FFF9E6", "borderColor": "#FF6B9D", "textColor": "#333333", "accentColor": "#FF6B9D"},
