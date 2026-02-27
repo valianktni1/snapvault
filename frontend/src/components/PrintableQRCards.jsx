@@ -297,12 +297,13 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
       </div>
 
       {/* Footer */}
-      <div className="text-center z-10" style={{ marginBottom: height * 0.02 }}>
+      <div className="text-center z-10" style={{ marginBottom: template.bgImage ? height * 0.04 : height * 0.02 }}>
         <p
           className="font-medium"
           style={{ 
             color: template.textColor,
-            fontSize: width * 0.035
+            fontSize: width * 0.035,
+            textShadow: template.bgImage ? '0 1px 3px rgba(255,255,255,0.7)' : 'none'
           }}
         >
           Scan to Upload
@@ -310,7 +311,8 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
         <p
           style={{ 
             color: template.accentColor,
-            fontSize: width * 0.025
+            fontSize: width * 0.025,
+            textShadow: template.bgImage ? '0 1px 3px rgba(255,255,255,0.7)' : 'none'
           }}
         >
           Photos & Videos
@@ -319,7 +321,11 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
           {eventType === 'wedding' && <Heart style={{ color: template.accentColor, width: width * 0.035, height: width * 0.035 }} />}
           {eventType === 'birthday' && <Cake style={{ color: template.accentColor, width: width * 0.035, height: width * 0.035 }} />}
           {eventType === 'corporate' && <Briefcase style={{ color: template.accentColor, width: width * 0.035, height: width * 0.035 }} />}
-          <span className="font-medium" style={{ color: template.accentColor, fontSize: width * 0.025 }}>
+          <span className="font-medium" style={{ 
+            color: template.accentColor, 
+            fontSize: width * 0.025,
+            textShadow: template.bgImage ? '0 1px 3px rgba(255,255,255,0.7)' : 'none'
+          }}>
             SnapVault
           </span>
         </div>
