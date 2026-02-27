@@ -200,7 +200,6 @@ function PaymentGate({ event, guestUrl, onPaymentConfirmed }) {
               </p>
             </div>
           )}
-          </button>
         </div>
       </div>
     </div>
