@@ -453,67 +453,74 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
       const W = canvas.width;
       const H = canvas.height;
 
-      // Background
-      ctx.fillStyle = selectedTemplate.bgColor;
-      ctx.fillRect(0, 0, W, H);
-
-      // Border
-      const bw = 8 * scale;
-      ctx.strokeStyle = selectedTemplate.borderColor;
-      ctx.lineWidth = bw;
-      ctx.strokeRect(bw / 2, bw / 2, W - bw, H - bw);
-
-      // Corner decorations for elegant/floral styles
-      if (selectedTemplate.style === 'elegant') {
-        const cs = W * 0.08;
-        ctx.lineWidth = 5 * scale;
-        ctx.strokeStyle = selectedTemplate.borderColor;
-        [[0, 0, cs, 0, 0, cs], [W, 0, W - cs, 0, W, cs], [0, H, cs, H, 0, H - cs], [W, H, W - cs, H, W, H - cs]].forEach(([, , x1, y1, x2, y2]) => {
-          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 === x2 ? x1 : (x1 < W/2 ? bw : W - bw), y1 === y2 ? y1 : (y1 < H/2 ? bw : H - bw));
-          ctx.stroke();
+      // If template has a background image, load and draw it
+      if (selectedTemplate.bgImage) {
+        const bgImg = new Image();
+        bgImg.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          bgImg.onload = resolve;
+          bgImg.onerror = reject;
+          bgImg.src = selectedTemplate.bgImage;
         });
-      }
+        ctx.drawImage(bgImg, 0, 0, W, H);
+      } else {
+        // Solid background
+        ctx.fillStyle = selectedTemplate.bgColor;
+        ctx.fillRect(0, 0, W, H);
 
-      // Accent bars for corporate_dark / tech styles
-      if (['corporate_dark', 'tech'].includes(selectedTemplate.style)) {
-        const barW = W * 0.15;
-        ctx.fillStyle = selectedTemplate.accentColor;
-        ctx.fillRect(0, 0, barW, 5 * scale);
-        ctx.fillRect(W - barW, 0, barW, 5 * scale);
-        ctx.fillRect(0, H - 5 * scale, barW, 5 * scale);
-        ctx.fillRect(W - barW, H - 5 * scale, barW, 5 * scale);
+        // Border
+        const bw = 8 * scale;
+        ctx.strokeStyle = selectedTemplate.borderColor;
+        ctx.lineWidth = bw;
+        ctx.strokeRect(bw / 2, bw / 2, W - bw, H - bw);
       }
 
       ctx.textAlign = 'center';
 
+      // For image templates, draw semi-transparent text backing for readability
+      const hasImage = !!selectedTemplate.bgImage;
+
       // Header subtitle
       const headerText = eventType === 'wedding' ? 'SHARE YOUR MEMORIES' : eventType === 'birthday' ? 'CAPTURE THE FUN!' : 'EVENT PHOTOS';
-      ctx.fillStyle = selectedTemplate.accentColor;
+      ctx.fillStyle = selectedTemplate.textColor;
       ctx.font = `600 ${28 * scale}px Arial, sans-serif`;
-      ctx.letterSpacing = `${4 * scale}px`;
-      ctx.fillText(headerText, W / 2, H * 0.09);
+      if (hasImage) {
+        const hm = ctx.measureText(headerText);
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.fillRect(W / 2 - hm.width / 2 - 10 * scale, H * 0.065 - 22 * scale, hm.width + 20 * scale, 32 * scale);
+      }
+      ctx.fillStyle = selectedTemplate.textColor;
+      ctx.fillText(headerText, W / 2, H * 0.08);
 
       // Title
-      ctx.fillStyle = selectedTemplate.textColor;
-      ctx.font = `bold ${48 * scale}px Georgia, serif`;
       const title = eventTitle || 'Event Name';
-      // Measure and potentially shrink title
       let titleFontSize = 48 * scale;
       ctx.font = `bold ${titleFontSize}px Georgia, serif`;
       while (ctx.measureText(title).width > W * 0.85 && titleFontSize > 20 * scale) {
         titleFontSize -= 2 * scale;
         ctx.font = `bold ${titleFontSize}px Georgia, serif`;
       }
-      ctx.fillText(title, W / 2, H * 0.155);
+      if (hasImage) {
+        const tm = ctx.measureText(title);
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.fillRect(W / 2 - tm.width / 2 - 10 * scale, H * 0.12 - titleFontSize * 0.7, tm.width + 20 * scale, titleFontSize * 1.2);
+      }
+      ctx.fillStyle = selectedTemplate.textColor;
+      ctx.fillText(title, W / 2, H * 0.14);
 
       // Event subtitle
       if (eventSubtitle) {
-        ctx.fillStyle = selectedTemplate.accentColor;
         ctx.font = `500 ${28 * scale}px Arial, sans-serif`;
-        ctx.fillText(eventSubtitle, W / 2, H * 0.21);
+        if (hasImage) {
+          const sm = ctx.measureText(eventSubtitle);
+          ctx.fillStyle = 'rgba(255,255,255,0.7)';
+          ctx.fillRect(W / 2 - sm.width / 2 - 8 * scale, H * 0.19 - 20 * scale, sm.width + 16 * scale, 28 * scale);
+        }
+        ctx.fillStyle = selectedTemplate.accentColor;
+        ctx.fillText(eventSubtitle, W / 2, H * 0.2);
       }
 
-      // Generate QR code locally (no external API)
+      // Generate QR code locally
       const qrDataUrl = await QRCode.toDataURL(guestUrl || 'https://example.com', {
         width: 400,
         errorCorrectionLevel: 'H',
@@ -533,13 +540,12 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
       const qrX = (W - qrSize) / 2;
       const qrY = (H - qrSize) / 2;
 
-      // QR background + border
+      // QR white background + border
       const pad = 18 * scale;
       ctx.fillStyle = '#FFFFFF';
       ctx.strokeStyle = selectedTemplate.borderColor;
       ctx.lineWidth = 4 * scale;
 
-      // Rounded rect for QR background
       const rx = qrX - pad, ry = qrY - pad, rw = qrSize + pad * 2, rh = qrSize + pad * 2, r = 12 * scale;
       ctx.beginPath();
       ctx.moveTo(rx + r, ry); ctx.lineTo(rx + rw - r, ry); ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r);
@@ -553,15 +559,26 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
       ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
       // Footer
-      ctx.fillStyle = selectedTemplate.textColor;
       ctx.font = `bold ${36 * scale}px Arial, sans-serif`;
+      if (hasImage) {
+        const ftm = ctx.measureText('Scan to Upload');
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.fillRect(W / 2 - ftm.width / 2 - 10 * scale, H * 0.82 - 28 * scale, ftm.width + 20 * scale, 36 * scale);
+      }
+      ctx.fillStyle = selectedTemplate.textColor;
       ctx.fillText('Scan to Upload', W / 2, H * 0.84);
 
-      ctx.fillStyle = selectedTemplate.accentColor;
       ctx.font = `500 ${26 * scale}px Arial, sans-serif`;
+      if (hasImage) {
+        const ptm = ctx.measureText('Photos & Videos');
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.fillRect(W / 2 - ptm.width / 2 - 8 * scale, H * 0.875 - 20 * scale, ptm.width + 16 * scale, 28 * scale);
+      }
+      ctx.fillStyle = selectedTemplate.accentColor;
       ctx.fillText('Photos & Videos', W / 2, H * 0.895);
 
       ctx.font = `600 ${22 * scale}px Arial, sans-serif`;
+      ctx.fillStyle = selectedTemplate.accentColor;
       ctx.fillText('SnapVault', W / 2, H * 0.945);
 
       // Trigger download
