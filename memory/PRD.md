@@ -1,60 +1,81 @@
-# SnapVault - Product Requirements Document
+# SnapVault Events (GuestPix) - Product Requirements Document
 
 ## Original Problem Statement
-Build a web application called "GuestPix/SnapVault" for events (weddings, birthdays, corporate). Guests upload photos, videos, and audio. Organizers choose from printable QR card templates. Self-hosted on TrueNAS Scale via Docker/Dockge.
+Build a web application called "GuestPix" / "SnapVault" for events (weddings, birthdays, corporate). Allow guests to upload photos, videos, and audio. Event organizers manage events with customizable QR code templates. Admin approves payments and manages the platform.
 
 ## Core Requirements
-- **User Roles:** Admin (full platform access), Organizer (manages own events)
-- **Event Types:** Wedding, Birthday, Corporate - each with 4 templates
-- **Media Upload:** Photos, videos, audio - max 200MB, video compression >80MB
-- **QR Cards:** 4 printable templates per event type, sizes 10"x8" and 8"x6"
-- **Payment:** £40 one-time fee via PayPal.me (trust-based verification)
-- **Email:** QR card sent to organizer's email after payment (SMTP via Hostinger)
-- **Admin:** SMTP settings, password change, user/event management
+- **Guest Uploads:** Photos, videos (max 200MB, compression >80MB), audio messages
+- **QR Templates:** 4 templates per event type (Wedding, Birthday, Corporate) in 2 sizes
+- **User Roles:** Admin (full platform access) + Organizer (own events)
+- **Payment:** Fixed £40 fee via PayPal, admin-approved. Triggers personalized email with QR card
+- **Email:** SMTP-based (Hostinger), admin-configurable in UI
+- **Branding:** Custom logo, persistent "SnapVault designed and hosted by Weddings By Mark" footer
+- **Deployment:** Self-hosted on TrueNAS via Docker/Dockge
+
+## Tech Stack
+- **Frontend:** React, TailwindCSS, react-router-dom, axios, qrcode (local generation)
+- **Backend:** FastAPI, Pydantic, Motor (async MongoDB), FFmpeg, JWT (python-jose)
+- **Database:** MongoDB
+- **Deployment:** Docker Compose, Nginx
 
 ## Architecture
-- **Frontend:** React + TailwindCSS + Shadcn UI
-- **Backend:** FastAPI + Motor (async MongoDB)
-- **Database:** MongoDB
-- **Deployment:** Docker Compose on TrueNAS/Dockge
-
-## What's Implemented (as of Feb 2026)
-- [x] User authentication (register, login, JWT)
-- [x] Event creation with type/template selection
-- [x] Media upload (photo, video, audio) with compression
-- [x] Printable QR card templates (4 per event type, 2 sizes)
-- [x] Admin dashboard (stats, events, users management)
-- [x] Admin password change
-- [x] Bulk media download as ZIP
-- [x] Guest upload page (public, no auth required)
-- [x] Docker deployment for TrueNAS
-- [x] **Payment Flow (Admin-Approved)** - Organiser submits payment, Admin verifies and approves, QR card auto-emailed
-- [x] **SMTP Settings** - Admin panel Settings tab, pre-filled Hostinger defaults
-- [x] **QR Card Email** - Generated server-side in chosen template, QR centered, PNG attachment
-- [x] **Admin Payment Column** - Events table shows Paid/Unpaid/Approve button
-- [x] **New Logo** - SnapVault padlock/swirl branding logo
-- [x] **QR Card Download Fix** - Local QR generation (no external API/CORS issues)
-- [x] **Footer Branding** - "SnapVault designed and hosted by Weddings By Mark" on every page
-
-## Key Endpoints
-- `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`
-- `POST /api/auth/change-password`
-- `POST /api/events`, `GET /api/events`, `GET/PUT/DELETE /api/events/{id}`
-- `GET /api/events/{event_id}/download` (ZIP)
-- `POST /api/events/{event_id}/confirm-payment` (payment confirmation)
-- `GET/POST /api/admin/settings/smtp` (SMTP config)
-- `POST /api/admin/settings/smtp/test` (test email)
-- `GET /api/admin/stats`, `GET /api/admin/events`, `GET /api/admin/users`
-- `DELETE /api/admin/users/{id}`
-- `GET /api/guest/event/{slug}`, `POST /api/guest/event/{slug}/upload`
+```
+/app/
+├── backend/
+│   ├── .env (MONGO_URL, DB_NAME, JWT_SECRET_KEY, ADMIN_EMAIL, UPLOAD_DIR)
+│   ├── requirements.txt
+│   ├── server.py (main app - models, routes, helpers)
+│   └── tests/
+│       └── test_forgot_password.py
+├── frontend/
+│   ├── .env (REACT_APP_BACKEND_URL)
+│   ├── package.json
+│   └── src/
+│       ├── App.js, App.css
+│       ├── components/ (Layout.jsx, PrintableQRCards.jsx)
+│       ├── context/ (AuthContext.js)
+│       ├── pages/ (Auth.jsx, ResetPassword.jsx, AdminDashboard.jsx, CreateEvent.jsx, EventManage.jsx, GuestUpload.jsx, Dashboard.jsx, OrganizerGallery.jsx)
+│       └── utils/ (api.js)
+```
 
 ## DB Schema
-- **users:** `{email, name, hashed_password, created_at}`
-- **events:** `{title, event_type, template, subtitle, welcome_message, event_date, slug, organizer_id, is_paid, qr_template, qr_size, paid_at, created_at}`
-- **media:** `{event_id, filename, original_name, file_type, file_size, uploader_name, created_at}`
-- **settings:** `{type:"smtp", smtp_host, smtp_port, smtp_user, smtp_password}`
+- **users:** `{_id, email, hashed_password, name, role, created_at}`
+- **events:** `{_id, title, event_type, template, subtitle, welcome_message, event_date, slug, organizer_id, is_paid, payment_status, qr_template, qr_size, guest_url, created_at}`
+- **media:** `{_id, event_id, filename, original_name, file_type, file_size, uploader_name, created_at}`
+- **settings:** `{_id, type:"smtp", smtp_host, smtp_port, smtp_user, smtp_password}`
+
+## Completed Features
+- [x] User auth (register/login) with JWT
+- [x] Admin & organizer roles
+- [x] Event CRUD with slug-based guest access
+- [x] Media upload (photo/video/audio) with video compression
+- [x] QR code templates (12 designs across 3 event types)
+- [x] Admin dashboard (stats, users, events management)
+- [x] Admin SMTP settings management with test email
+- [x] Admin password change
+- [x] Payment flow (PayPal manual → admin approval → email with QR card)
+- [x] Personalized confirmation email with order summary
+- [x] Custom branding (logo + footer)
+- [x] QR code local generation (no CORS issues)
+- [x] Bulk media download (ZIP)
+- [x] **Forgot Password feature** (completed 2026-02-27)
 
 ## Backlog
-- P2: Analytics/reporting for events
-- P2: Customizable payment amount per event
-- P3: Automated PayPal IPN/webhook verification
+- [ ] **P1:** Improve Wedding QR Code Template Designs (premium backgrounds)
+- [ ] **P2:** Improve Birthday & Corporate QR Code Templates
+- [ ] **P2:** Refactor server.py into /routes, /models, /services
+
+## Key API Endpoints
+- `POST /api/auth/register`, `/api/auth/login`, `/api/auth/me`
+- `POST /api/auth/change-password`
+- `POST /api/auth/forgot-password` (accepts site_url for self-hosted reset links)
+- `POST /api/auth/reset-password` (token-based)
+- `GET/POST/PUT/DELETE /api/events/*`
+- `POST /api/events/{id}/submit-payment`
+- `POST /api/admin/events/{id}/approve-payment`
+- `GET/POST /api/admin/settings/smtp`
+- `POST /api/admin/settings/smtp/test`
+
+## Credentials
+- **Admin:** admin@snapvault.uk
+- **3rd Party:** PayPal.me (manual), Hostinger SMTP
