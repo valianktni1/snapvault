@@ -421,25 +421,26 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
       const W = canvas.width;
       const H = canvas.height;
 
-      // Background
-      ctx.fillStyle = selectedTemplate.bgColor;
-      ctx.fillRect(0, 0, W, H);
-
-      // Border
-      const bw = 8 * scale;
-      ctx.strokeStyle = selectedTemplate.borderColor;
-      ctx.lineWidth = bw;
-      ctx.strokeRect(bw / 2, bw / 2, W - bw, H - bw);
-
-      // Corner decorations for elegant/floral styles
-      if (selectedTemplate.style === 'elegant') {
-        const cs = W * 0.08;
-        ctx.lineWidth = 5 * scale;
-        ctx.strokeStyle = selectedTemplate.borderColor;
-        [[0, 0, cs, 0, 0, cs], [W, 0, W - cs, 0, W, cs], [0, H, cs, H, 0, H - cs], [W, H, W - cs, H, W, H - cs]].forEach(([, , x1, y1, x2, y2]) => {
-          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 === x2 ? x1 : (x1 < W/2 ? bw : W - bw), y1 === y2 ? y1 : (y1 < H/2 ? bw : H - bw));
-          ctx.stroke();
+      // Background - either image or solid color
+      if (selectedTemplate.bgImage) {
+        const bgImg = new Image();
+        bgImg.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          bgImg.onload = resolve;
+          bgImg.onerror = reject;
+          bgImg.src = selectedTemplate.bgImage;
         });
+        ctx.drawImage(bgImg, 0, 0, W, H);
+      } else {
+        // Solid background
+        ctx.fillStyle = selectedTemplate.bgColor;
+        ctx.fillRect(0, 0, W, H);
+
+        // Border
+        const bw = 8 * scale;
+        ctx.strokeStyle = selectedTemplate.borderColor;
+        ctx.lineWidth = bw;
+        ctx.strokeRect(bw / 2, bw / 2, W - bw, H - bw);
       }
 
       // Accent bars for corporate_dark / tech styles
