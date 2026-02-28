@@ -13,48 +13,51 @@ const SIZE_OPTIONS = [
 const QR_CARD_TEMPLATES = {
   wedding: [
     {
-      key: 'elegant_frame',
-      name: 'Elegant Frame',
-      description: 'Classic gold border with script text',
+      key: 'golden_elegance',
+      name: 'Golden Elegance',
+      description: 'Classic gold filigree on cream',
       bgColor: '#FDF8F3',
       borderColor: '#D4AF37',
       textColor: '#2C1810',
-      accentColor: '#D4AF37',
+      accentColor: '#B8960C',
       headerFont: "'Playfair Display', serif",
-      style: 'elegant'
+      style: 'bg_image',
+      bgImage: '/templates/golden_elegance.png'
     },
     {
-      key: 'romantic_floral',
-      name: 'Romantic Floral',
-      description: 'Soft pink with floral corners',
-      bgColor: '#FFF5F7',
-      borderColor: '#E8B4BC',
-      textColor: '#6B2D3D',
-      accentColor: '#D4869C',
+      key: 'botanical_garden',
+      name: 'Botanical Garden',
+      description: 'Watercolour greenery frame',
+      bgColor: '#FFFFFF',
+      borderColor: '#7BA883',
+      textColor: '#2D3B2E',
+      accentColor: '#6B8E6B',
       headerFont: "'Playfair Display', serif",
-      style: 'floral'
+      style: 'bg_image',
+      bgImage: '/templates/botanical_garden.png'
+    },
+    {
+      key: 'midnight_romance',
+      name: 'Midnight Romance',
+      description: 'Starry navy with gold accents',
+      bgColor: '#0F1B33',
+      borderColor: '#C5A55A',
+      textColor: '#FFFFFF',
+      accentColor: '#C5A55A',
+      headerFont: "'Playfair Display', serif",
+      style: 'bg_image',
+      bgImage: '/templates/midnight_romance.png'
     },
     {
       key: 'modern_minimal',
-      name: 'Modern Minimal',
-      description: 'Clean lines, sophisticated feel',
+      name: 'Clean Elegant',
+      description: 'Plain, sophisticated simplicity',
       bgColor: '#FFFFFF',
       borderColor: '#1A1A1A',
       textColor: '#1A1A1A',
       accentColor: '#666666',
       headerFont: "'Playfair Display', serif",
       style: 'minimal'
-    },
-    {
-      key: 'rustic_kraft',
-      name: 'Rustic Charm',
-      description: 'Warm kraft paper aesthetic',
-      bgColor: '#F5E6D3',
-      borderColor: '#8B7355',
-      textColor: '#4A3728',
-      accentColor: '#6B8E23',
-      headerFont: "'Playfair Display', serif",
-      style: 'rustic'
     }
   ],
   birthday: [
