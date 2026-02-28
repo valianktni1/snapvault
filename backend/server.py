@@ -229,12 +229,21 @@ def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
     text_rgb = hex_to_rgb(tmpl["textColor"])
     accent_rgb = hex_to_rgb(tmpl["accentColor"])
 
-    img = Image.new("RGB", (width, height), bg_rgb)
-    draw = ImageDraw.Draw(img)
+    # Use background image if available
+    bg_image_name = tmpl.get("bgImage")
+    if bg_image_name:
+        bg_path = ROOT_DIR / "templates" / bg_image_name
+        if bg_path.exists():
+            img = Image.open(bg_path).convert("RGB").resize((width, height), Image.LANCZOS)
+        else:
+            img = Image.new("RGB", (width, height), bg_rgb)
+    else:
+        img = Image.new("RGB", (width, height), bg_rgb)
+        draw_border = ImageDraw.Draw(img)
+        bw = 6
+        draw_border.rectangle([bw // 2, bw // 2, width - bw // 2, height - bw // 2], outline=border_rgb, width=bw)
 
-    # Draw border
-    bw = 6
-    draw.rectangle([bw // 2, bw // 2, width - bw // 2, height - bw // 2], outline=border_rgb, width=bw)
+    draw = ImageDraw.Draw(img)
 
     # Load fonts
     try:
