@@ -350,7 +350,7 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
               width: ${sizeStyleRef.printWidth};
               height: ${sizeStyleRef.printHeight};
               background: ${selectedTemplate.bgColor};
-              border: 4px solid ${selectedTemplate.borderColor};
+              ${selectedTemplate.bgImage ? `background-image: url(${window.location.origin}${selectedTemplate.bgImage}); background-size: cover; background-position: center;` : `border: 4px solid ${selectedTemplate.borderColor};`}
               border-radius: 12px;
               display: flex;
               flex-direction: column;
