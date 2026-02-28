@@ -71,7 +71,14 @@ function PaymentGate({ event, guestUrl, onSubmitted }) {
                     : 'border-slate-200 hover:border-indigo-300'
                 }`}
               >
-                <div className="h-20 flex items-center justify-center" style={{ backgroundColor: tmpl.bgColor }}>
+                <div className="h-20 flex items-center justify-center" style={{
+                  backgroundColor: tmpl.bgColor,
+                  ...(tmpl.bgImage ? {
+                    backgroundImage: `url(${tmpl.bgImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  } : {})
+                }}>
                   <div className="w-8 h-8 rounded bg-white flex items-center justify-center" style={{ border: `2px solid ${tmpl.borderColor}` }}>
                     <div className="w-5 h-5 bg-slate-300 rounded-sm" />
                   </div>
