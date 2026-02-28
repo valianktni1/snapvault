@@ -219,10 +219,15 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
       className="relative flex flex-col items-center justify-between rounded-lg shadow-lg print:shadow-none"
       style={{
         backgroundColor: template.bgColor,
-        border: `4px solid ${template.borderColor}`,
+        border: template.bgImage ? 'none' : `4px solid ${template.borderColor}`,
         width: width,
         height: height,
-        padding: width * 0.05
+        padding: width * 0.05,
+        ...(template.bgImage ? {
+          backgroundImage: `url(${template.bgImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        } : {})
       }}
     >
       {getDecorations()}
