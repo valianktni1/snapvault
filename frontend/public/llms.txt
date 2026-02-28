@@ -1,0 +1,43 @@
+# SnapVault Client Galleries
+
+> The secure, high-speed portal for uploading and viewing guest wedding and event media. No app download required.
+
+SnapVault Client Galleries is a web application built and hosted by Weddings By Mark (https://weddingsbymark.uk). It allows event guests to upload photos, videos and audio messages directly to a private gallery using a simple QR code scan — no app install needed.
+
+## What It Does
+
+- Guests scan a printed QR code at the event venue
+- They upload photos, videos and audio messages from any device
+- The event organiser gets a private gallery with all guest media
+- Supports weddings, birthdays and corporate events
+- Files up to 200MB with automatic video compression
+- Printable QR cards in multiple premium designs and sizes
+
+## Who It's For
+
+- Wedding couples wanting guest photos in one place
+- Birthday party hosts collecting memories
+- Corporate event organisers gathering attendee media
+- Wedding planners and event coordinators
+
+## Key Features
+
+- Private guest upload via QR code (no login required for guests)
+- Organiser dashboard to manage events and view galleries
+- Admin panel for platform management
+- Customisable QR card templates (Wedding, Birthday, Corporate)
+- Bulk media download as ZIP
+- Secure payment flow with admin approval
+- Automated email delivery of personalised QR cards
+- Self-hosted and fully private — your data stays on your server
+
+## Built By
+
+**Weddings By Mark**
+Website: https://weddingsbymark.uk
+SnapVault: https://snapvault.uk
+Client Galleries: https://galleries.snapvault.uk
+
+## Keywords
+
+snapvault, wedding photo sharing, guest photo upload, event photo gallery, wedding QR code, guest media upload, private photo gallery, wedding photography, event media collection, QR code photo booth, weddings by mark, wedding planner, self-hosted gallery, photo sharing app, video upload wedding, birthday photo gallery, corporate event photos, guest memories, wedding memories, event QR code
