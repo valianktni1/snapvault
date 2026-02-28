@@ -49,6 +49,33 @@
                 document.head.appendChild(tailwindScript);
             }
         </script>
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "WebApplication",
+              "@id": "https://galleries.snapvault.uk/#webapp",
+              "name": "SnapVault Client Galleries",
+              "url": "https://galleries.snapvault.uk",
+              "applicationCategory": "Photo Gallery Application",
+              "operatingSystem": "Any browser with internet access (iOS, Android, Windows, macOS)",
+              "browserRequirements": "Requires JavaScript and HTML5 support",
+              "author": {
+                "@type": "ProfessionalService",
+                "name": "Weddings By Mark",
+                "@id": "https://perfectweddingsbymark.uk/#localbusiness",
+                "url": "https://perfectweddingsbymark.uk",
+                "telephone": "+447712117357"
+              },
+              "isPartOf": {
+                "@id": "https://snapvault.uk/#website"
+              },
+              "description": "The secure, high-speed portal for uploading and viewing guest wedding and event media via SnapVault. No app download required."
+            }
+          ]
+        }
+        </script>
     </head>
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
