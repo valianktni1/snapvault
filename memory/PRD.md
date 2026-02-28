@@ -58,11 +58,13 @@ Build a web application called "GuestPix" / "SnapVault" for events (weddings, bi
 - [x] Custom branding (logo + footer)
 - [x] QR code local generation (no CORS issues)
 - [x] Bulk media download (ZIP)
-- [x] **Forgot Password feature** (completed 2026-02-27)
+- [x] Forgot Password feature (completed 2026-02-27)
+- [x] JSON-LD schema markup for SEO (completed 2026-02-28)
+- [x] llms.txt for LLM discoverability (completed 2026-02-28)
+- [x] Premium wedding QR card templates: Golden Elegance, Botanical Garden, Midnight Romance + Clean Elegant (completed 2026-02-28)
 
 ## Backlog
-- [ ] **P1:** Improve Wedding QR Code Template Designs (premium backgrounds)
-- [ ] **P2:** Improve Birthday & Corporate QR Code Templates
+- [ ] **P2:** Improve Birthday & Corporate QR Code Templates (apply same premium background image approach)
 - [ ] **P2:** Refactor server.py into /routes, /models, /services
 
 ## Key API Endpoints
