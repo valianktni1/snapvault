@@ -572,7 +572,14 @@ export default function PrintableQRCards({ eventType, eventTitle, eventSubtitle,
             {/* Mini Preview */}
             <div
               className="h-28 p-3 flex flex-col items-center justify-center"
-              style={{ backgroundColor: tmpl.bgColor }}
+              style={{
+                backgroundColor: tmpl.bgColor,
+                ...(tmpl.bgImage ? {
+                  backgroundImage: `url(${tmpl.bgImage})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                } : {})
+              }}
             >
               <div
                 className="w-10 h-10 rounded-lg mb-2 flex items-center justify-center"
