@@ -165,24 +165,8 @@ function QRCard({ template, eventTitle, eventSubtitle, guestUrl, eventType, size
   const getDecorations = () => {
     const cornerSize = width * 0.08;
     switch (template.style) {
-      case 'elegant':
-        return (
-          <>
-            <div className="absolute top-0 left-0 border-t-4 border-l-4 rounded-tl-lg" style={{ borderColor: template.borderColor, width: cornerSize, height: cornerSize }} />
-            <div className="absolute top-0 right-0 border-t-4 border-r-4 rounded-tr-lg" style={{ borderColor: template.borderColor, width: cornerSize, height: cornerSize }} />
-            <div className="absolute bottom-0 left-0 border-b-4 border-l-4 rounded-bl-lg" style={{ borderColor: template.borderColor, width: cornerSize, height: cornerSize }} />
-            <div className="absolute bottom-0 right-0 border-b-4 border-r-4 rounded-br-lg" style={{ borderColor: template.borderColor, width: cornerSize, height: cornerSize }} />
-          </>
-        );
-      case 'floral':
-        return (
-          <>
-            <div className="absolute top-3 left-3 opacity-30" style={{ fontSize: width * 0.06 }}>✿</div>
-            <div className="absolute top-3 right-3 opacity-30" style={{ fontSize: width * 0.06 }}>✿</div>
-            <div className="absolute bottom-3 left-3 opacity-30" style={{ fontSize: width * 0.06 }}>✿</div>
-            <div className="absolute bottom-3 right-3 opacity-30" style={{ fontSize: width * 0.06 }}>✿</div>
-          </>
-        );
+      case 'bg_image':
+        return null;
       case 'confetti':
         return (
           <>
