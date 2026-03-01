@@ -214,11 +214,21 @@ def hex_to_rgb(hex_color: str) -> tuple:
     return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
 
+# Mapping old template keys to new ones for backward compatibility
+TEMPLATE_KEY_MIGRATION = {
+    "elegant_frame": "golden_elegance",
+    "romantic_floral": "botanical_garden",
+    "rustic_kraft": "midnight_romance",
+}
+
+
 def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
                            event_title: str, event_subtitle: str, guest_url: str) -> bytes:
     """Generate a printable QR card image with the QR code centered."""
     templates = QR_CARD_TEMPLATES.get(event_type, QR_CARD_TEMPLATES["wedding"])
-    tmpl = templates.get(template_key)
+    # Migrate old template keys to new ones
+    resolved_key = TEMPLATE_KEY_MIGRATION.get(template_key, template_key)
+    tmpl = templates.get(resolved_key)
     if not tmpl:
         tmpl = list(templates.values())[0]
 
