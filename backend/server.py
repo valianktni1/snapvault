@@ -253,13 +253,34 @@ def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
         bw = 6
         draw_border.rectangle([bw // 2, bw // 2, width - bw // 2, height - bw // 2], outline=border_rgb, width=bw)
 
+    has_bg_image = bg_image_name and (ROOT_DIR / "templates" / bg_image_name).exists()
+
+    # For background-image templates, add a semi-transparent centre panel for readability
+    if has_bg_image:
+        overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        overlay_draw = ImageDraw.Draw(overlay)
+        # Determine panel colour based on background brightness
+        is_dark_bg = tmpl["bgColor"].lower() in ("#0f1b33", "#1a1a2e", "#111827", "#0f2744")
+        panel_color = (0, 0, 0, 100) if is_dark_bg else (255, 255, 255, 180)
+        margin_x = int(width * 0.12)
+        margin_y = int(height * 0.04)
+        overlay_draw.rounded_rectangle(
+            [margin_x, margin_y, width - margin_x, height - margin_y],
+            radius=20, fill=panel_color
+        )
+        img = img.convert("RGBA")
+        img = Image.alpha_composite(img, overlay).convert("RGB")
+
     draw = ImageDraw.Draw(img)
 
-    # Load fonts
+    # Load fonts — larger sizes for readability
     try:
-        serif_bold = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf", int(width * 0.052))
-        sans_reg = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", int(width * 0.028))
-        sans_bold = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", int(width * 0.035))
+        title_size = int(width * 0.07) if has_bg_image else int(width * 0.052)
+        subtitle_size = int(width * 0.038) if has_bg_image else int(width * 0.028)
+        footer_size = int(width * 0.045) if has_bg_image else int(width * 0.035)
+        serif_bold = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf", title_size)
+        sans_reg = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", subtitle_size)
+        sans_bold = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", footer_size)
     except Exception:
         serif_bold = ImageFont.load_default()
         sans_reg = ImageFont.load_default()
@@ -274,10 +295,9 @@ def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
     # Event title
     tbox = draw.textbbox((0, 0), event_title, font=serif_bold)
     title_w = tbox[2] - tbox[0]
-    # If title is too wide, truncate
     display_title = event_title
-    if title_w > width * 0.85:
-        while title_w > width * 0.85 and len(display_title) > 10:
+    if title_w > width * 0.80:
+        while title_w > width * 0.80 and len(display_title) > 10:
             display_title = display_title[:-1]
             tbox = draw.textbbox((0, 0), display_title + "...", font=serif_bold)
             title_w = tbox[2] - tbox[0]
@@ -289,7 +309,7 @@ def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
     # Event subtitle
     if event_subtitle:
         sbox = draw.textbbox((0, 0), event_subtitle, font=sans_reg)
-        draw.text(((width - (sbox[2] - sbox[0])) // 2, int(height * 0.21)), event_subtitle, fill=accent_rgb, font=sans_reg)
+        draw.text(((width - (sbox[2] - sbox[0])) // 2, int(height * 0.22)), event_subtitle, fill=accent_rgb, font=sans_reg)
 
     # Generate QR code image
     qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=2)
@@ -297,33 +317,33 @@ def generate_qr_card_image(event_type: str, template_key: str, size_key: str,
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
 
-    qr_size = int(min(width, height) * 0.40)
+    qr_size = int(min(width, height) * 0.38)
     qr_img = qr_img.resize((qr_size, qr_size), Image.LANCZOS)
 
     # Center the QR code
     qr_x = (width - qr_size) // 2
-    qr_y = (height - qr_size) // 2
+    qr_y = (height - qr_size) // 2 + int(height * 0.02)
 
     # QR white background + border
-    pad = 14
-    draw.rectangle(
+    pad = 16
+    draw.rounded_rectangle(
         [qr_x - pad, qr_y - pad, qr_x + qr_size + pad, qr_y + qr_size + pad],
-        fill=(255, 255, 255), outline=border_rgb, width=4
+        radius=12, fill=(255, 255, 255), outline=border_rgb, width=4
     )
     img.paste(qr_img, (qr_x, qr_y))
 
     # Footer
     ft = "Scan to Upload"
     fbox = draw.textbbox((0, 0), ft, font=sans_bold)
-    draw.text(((width - (fbox[2] - fbox[0])) // 2, int(height * 0.83)), ft, fill=text_rgb, font=sans_bold)
+    draw.text(((width - (fbox[2] - fbox[0])) // 2, int(height * 0.82)), ft, fill=text_rgb, font=sans_bold)
 
     pt = "Photos & Videos"
     pbox = draw.textbbox((0, 0), pt, font=sans_reg)
-    draw.text(((width - (pbox[2] - pbox[0])) // 2, int(height * 0.89)), pt, fill=accent_rgb, font=sans_reg)
+    draw.text(((width - (pbox[2] - pbox[0])) // 2, int(height * 0.88)), pt, fill=accent_rgb, font=sans_reg)
 
     bt = "SnapVault"
     bbox = draw.textbbox((0, 0), bt, font=sans_reg)
-    draw.text(((width - (bbox[2] - bbox[0])) // 2, int(height * 0.94)), bt, fill=accent_rgb, font=sans_reg)
+    draw.text(((width - (bbox[2] - bbox[0])) // 2, int(height * 0.93)), bt, fill=accent_rgb, font=sans_reg)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
